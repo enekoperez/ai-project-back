@@ -33,7 +33,8 @@ class OcrService:
         response = self._try_json_loads(s=chat_api_response)
         return ocr_to_dict(db_obj=ocr_obj, response=response)
 
-    def _response_format(self, questions):
+    @staticmethod
+    def _response_format(questions):
         properties = {
             question: {
                 "type": "array",

@@ -2,5 +2,6 @@ from webapp.models.ocr_domain import Ocr
 
 
 class OcrRepository:
-    def create(self):
+    @staticmethod
+    def create():
         return Ocr.objects.create()

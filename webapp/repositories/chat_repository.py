@@ -2,8 +2,10 @@ from webapp.models.chat_domain import Chat
 
 
 class ChatRepository:
-    def create(self):
+    @staticmethod
+    def create():
         return Chat.objects.create()
 
-    def get_all(self):
+    @staticmethod
+    def get_all():
         return Chat.objects.order_by("-created_at")
