@@ -1,4 +1,4 @@
-from webapp.models.chat import Chat
+from webapp.models.chat_domain import Chat
 
 
 class ChatRepository:

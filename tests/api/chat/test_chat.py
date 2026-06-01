@@ -2,11 +2,11 @@ from unittest.mock import Mock
 
 from flask import Flask
 
-from webapp.api.chat import chat
+from webapp.api.chat_api import chat
 
 
 def make_client(monkeypatch, service):
-    monkeypatch.setattr("webapp.api.chat.chat_service", service)
+    monkeypatch.setattr("webapp.api.chat_api.chat_service", service)
 
     app = Flask(__name__)
     app.register_blueprint(chat, url_prefix="/ai/chat/")

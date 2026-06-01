@@ -1,5 +1,5 @@
-from webapp.dto.chat import chat_to_dict
-from webapp.repositories.chat import ChatRepository
+from webapp.dto.chat_dto import chat_to_dict
+from webapp.repositories.chat_repository import ChatRepository
 
 
 class ChatService:

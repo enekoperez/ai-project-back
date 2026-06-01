@@ -1,7 +1,7 @@
 from flask import jsonify
 
-from webapp.api.chat import chat
-from webapp.api.ocr import ocr
+from webapp.api.chat_api import chat
+from webapp.api.ocr_api import ocr
 
 
 def init_routes(flask_app):

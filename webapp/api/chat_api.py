@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify
 
-from webapp.services.chat import ChatService
+from webapp.services.chat_service import ChatService
 
 chat = Blueprint("chat", __name__)
 chat_service = ChatService()
