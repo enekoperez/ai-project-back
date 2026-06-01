@@ -1,13 +1,20 @@
 from flask import Flask
+from mongoengine import connect
+
+from webapp.config import Config
+from webapp.routes.routes import init_routes
 
 
-app = Flask(__name__)
-app.config.from_object("config.Config")
+def get_flask_app():
+    flask_app = Flask(__name__)
+    flask_app.config.from_object(Config)
+
+    connect(host=flask_app.config["DB_CONNECTION_STRING"])
+    init_routes(flask_app)
+    return flask_app
 
 
-@app.get("/")
-def index():
-    return "Hello, Flask!"
+app = get_flask_app()
 
 
 if __name__ == "__main__":

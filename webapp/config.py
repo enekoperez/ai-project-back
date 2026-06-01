@@ -10,4 +10,4 @@ class Config:
     # DEBUG = False
     # TEST = False
 
-    SECRET_KEY = environ["SECRET_KEY"]
+    DB_CONNECTION_STRING = environ["AI_DB_CONNECTION_STRING"]
