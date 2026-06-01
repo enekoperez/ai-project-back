@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 
 from webapp.services.chat_service import ChatService
 
@@ -7,12 +7,6 @@ chat_service = ChatService()
 
 
 @chat.route("", methods=["POST"])
-def create_chat():
-    response = chat_service.create()
-    return jsonify(response), 201
-
-
-@chat.route("", methods=["GET"])
-def get_chats():
-    response = chat_service.get_all()
+def ask():
+    response = chat_service.ask(request.json)
     return jsonify(response), 200

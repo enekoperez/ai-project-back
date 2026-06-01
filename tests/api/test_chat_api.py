@@ -13,39 +13,32 @@ def make_client(monkeypatch, service):
     return app.test_client()
 
 
-def test_create_chat_returns_created_chat(monkeypatch):
+def test_answer_chat_question_returns_response(monkeypatch):
     service = Mock()
-    service.create.return_value = {
+    service.ask.return_value = {
         "id": "chat-1",
+        "response": "Use the invoice OCR endpoint.",
         "created_at": "2026-06-01T12:00:00",
     }
     client = make_client(monkeypatch, service)
 
-    response = client.post("/ai/chat/")
+    request_json = {"question": "How do I extract invoice totals?"}
+    response = client.post("/ai/chat/", json=request_json)
 
-    assert response.status_code == 201
+    assert response.status_code == 200
     assert response.get_json() == {
         "id": "chat-1",
+        "response": "Use the invoice OCR endpoint.",
         "created_at": "2026-06-01T12:00:00",
     }
-    service.create.assert_called_once_with()
-    service.get_all.assert_not_called()
+    service.ask.assert_called_once_with(request_json)
 
 
-def test_get_chats_returns_all_chats(monkeypatch):
+def test_get_chat_is_not_available(monkeypatch):
     service = Mock()
-    service.get_all.return_value = [
-        {"id": "chat-2", "created_at": "2026-06-01T12:01:00"},
-        {"id": "chat-1", "created_at": "2026-06-01T12:00:00"},
-    ]
     client = make_client(monkeypatch, service)
 
     response = client.get("/ai/chat/")
 
-    assert response.status_code == 200
-    assert response.get_json() == [
-        {"id": "chat-2", "created_at": "2026-06-01T12:01:00"},
-        {"id": "chat-1", "created_at": "2026-06-01T12:00:00"},
-    ]
-    service.get_all.assert_called_once_with()
-    service.create.assert_not_called()
+    assert response.status_code == 405
+    service.ask.assert_not_called()
