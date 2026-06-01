@@ -1,7 +1,7 @@
 from flask import jsonify
 
-from webapp.api.chat_api import chat_api
-from webapp.api.ocr_api import ocr_api
+from webapp.api.chat import chat
+from webapp.api.ocr import ocr
 
 
 def init_routes(flask_app):
@@ -11,5 +11,5 @@ def init_routes(flask_app):
     def health_check():
         return jsonify({"status": "OK"}), 200
 
-    flask_app.register_blueprint(chat_api, url_prefix="/ai/chat/")
-    flask_app.register_blueprint(ocr_api, url_prefix="/ai/ocr/")
+    flask_app.register_blueprint(chat, url_prefix="/ai/chat/")
+    flask_app.register_blueprint(ocr, url_prefix="/ai/ocr/")

@@ -1,5 +1,5 @@
-from webapp.dto.ocr_dto import ocr_to_dict
-from webapp.repositories.ocr_repository import OcrRepository
+from webapp.dto.ocr import ocr_to_dict
+from webapp.repositories.ocr import OcrRepository
 
 
 class OcrService:

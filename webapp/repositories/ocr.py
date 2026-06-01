@@ -1,4 +1,4 @@
-from webapp.models.ocr_domain import Ocr
+from webapp.models.ocr import Ocr
 
 
 class OcrRepository:
