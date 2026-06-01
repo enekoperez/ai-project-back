@@ -11,5 +11,5 @@ def init_routes(flask_app):
     def health_check():
         return jsonify({"status": "OK"}), 200
 
-    flask_app.register_blueprint(ocr_api, url_prefix="/ai/ocr/")
     flask_app.register_blueprint(chat_api, url_prefix="/ai/chat/")
+    flask_app.register_blueprint(ocr_api, url_prefix="/ai/ocr/")

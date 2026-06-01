@@ -1,5 +1,5 @@
-def ocr_to_dict(ocr):
+def ocr_to_dict(db_obj):
     return {
-        "id": str(ocr.id),
-        "created_at": ocr.created_at.isoformat() if ocr.created_at else None,
+        "id": str(db_obj.id),
+        "created_at": db_obj.created_at.isoformat() if db_obj.created_at else None,
     }

@@ -1,5 +1,5 @@
-def chat_to_dict(chat):
+def chat_to_dict(db_obj):
     return {
-        "id": str(chat.id),
-        "created_at": chat.created_at.isoformat() if chat.created_at else None,
+        "id": str(db_obj.id),
+        "created_at": db_obj.created_at.isoformat() if db_obj.created_at else None,
     }
