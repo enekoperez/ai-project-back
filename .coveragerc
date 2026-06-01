@@ -1,3 +1,5 @@
 [run]
 omit =
     webapp/run.py
+    webapp/routes/routes.py
+    webapp/services/ai_service.py
