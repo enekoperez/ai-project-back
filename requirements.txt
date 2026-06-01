@@ -4,3 +4,6 @@ gunicorn==26.0.0
 mongoengine==0.29.1
 pytest==9.0.2
 python-dotenv==1.2.2
+mistralai==2.0.5
+google-genai==2.0.1
+openai==2.32.0
