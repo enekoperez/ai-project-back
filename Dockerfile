@@ -12,7 +12,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY webapp /app/webapp
 
-ENV AI_DB_CONNECTION_STRING=mongodb://localhost:27017/
+ENV AI_DB_CONNECTION_STRING=mongodb://localhost:27017/ai_db
 
 EXPOSE 80
 
