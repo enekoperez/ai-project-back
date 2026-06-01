@@ -12,10 +12,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY webapp /app/webapp
 
-# ENV FLASK_APP=run.py
-# ENV FLASK_ENV=production
+ENV AI_DB_CONNECTION_STRING=mongodb://localhost:27017/
 
 EXPOSE 80
 
-# CMD [ "gunicorn", "-w", "4", "-b", ":80", "--timeout", "120", "--worker-class", "gevent", "--worker-connections", "1000", "webapp.run:app" ]
-CMD ["python", "-m", "webapp.run"]
+CMD [ "gunicorn", "-w", "4", "-b", ":80", "--timeout", "120", "--worker-class", "gevent", "--worker-connections", "1000", "webapp.run:app" ]
