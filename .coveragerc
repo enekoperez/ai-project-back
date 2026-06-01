@@ -1,0 +1,3 @@
+[run]
+omit =
+    webapp/run.py

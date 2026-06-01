@@ -1,5 +1,13 @@
+import os
 import sys
 import types
+
+
+def _install_test_environment_defaults():
+    os.environ.setdefault("AI_DB_CONNECTION_STRING", "mongodb://localhost:27017/test_ai_db")
+    os.environ.setdefault("MISTRAL_API_KEY", "test-mistral-api-key")
+    os.environ.setdefault("GOOGLE_AI_API_KEY", "test-google-ai-api-key")
+    os.environ.setdefault("OPENAI_API_KEY", "test-openai-api-key")
 
 
 def _install_ai_dependency_stubs():
@@ -71,4 +79,5 @@ def _install_ai_dependency_stubs():
     sys.modules.setdefault("openai.types.responses", openai_responses_module)
 
 
+_install_test_environment_defaults()
 _install_ai_dependency_stubs()
