@@ -1,4 +1,4 @@
-def build_system_prompt() -> str:
+def build_system_prompt() -> str:  # TODO: add XML tags
     return (
         """
         You answer questions about the provided file. Be concise and only use the file content.
