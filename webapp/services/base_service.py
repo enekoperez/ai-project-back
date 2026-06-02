@@ -46,6 +46,10 @@ class BaseService:
     # code...
 
     def _call_llm_and_log(self, system_prompt, user_prompt, is_chat=False, is_rag=False):
+        # Exactly one mode must be selected: chat XOR RAG.
+        if is_chat == is_rag:
+            raise ValueError("Exactly one of is_chat or is_rag must be true.")
+
         chat_log = self.chat_log_repository.create()
 
         chat_api_response, *_ = self.ai_service.call_llm(
@@ -54,6 +58,8 @@ class BaseService:
             max_output_tokens=_MAX_OUTPUT_TOKENS,
             is_chat=is_chat,
             is_rag=is_rag,
+            # history=self.chat_log_repository.get_history(metadata=metadata),
+            # cache_name=cache_name,
         )
         return chat_log, chat_api_response
 
