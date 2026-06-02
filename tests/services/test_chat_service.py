@@ -27,6 +27,7 @@ def test_ask_creates_chat_row_and_calls_ai_service_with_question():
     service.ai_service = ai_service
     service.chat_log_repository = chat_log_repository
     service.rag_service = Mock()
+    chat_log_repository.get_history.return_value = []
     service.rag_service.get_top_chunks.return_value = [
         {"source_name": "ocr.md", "score": 0.9, "text": "Use the OCR endpoint for invoice files."}
     ]
@@ -42,7 +43,11 @@ def test_ask_creates_chat_row_and_calls_ai_service_with_question():
         "cache_create_time_utc_in_millis": None,
         "source_names_and_scores": [{"source_name": "ocr.md", "score": 0.9}],
     }
-    chat_log_repository.create.assert_called_once_with(key={"user_id": "user-1"})
+    chat_log_repository.create.assert_called_once_with(
+        key={"user_id": "user-1"},
+        user_question="How do I extract invoice totals?",
+        chat_api_response="Use the OCR endpoint for invoice files.",
+    )
     service.rag_service.get_top_chunks.assert_called_once_with(question="How do I extract invoice totals?")
     ai_service.call_llm.assert_called_once_with(
         system_prompt=build_system_prompt(),
@@ -53,6 +58,7 @@ def test_ask_creates_chat_row_and_calls_ai_service_with_question():
         max_output_tokens=6666,
         is_chat=False,
         is_rag=True,
+        history=[],
     )
 
 
@@ -78,6 +84,11 @@ def test_ask_allows_missing_created_at():
         "cache_create_time_utc_in_millis": None,
         "source_names_and_scores": [],
     }
+    chat_log_repository.create.assert_called_once_with(
+        key={"user_id": "user-1"},
+        user_question="What can this app do?",
+        chat_api_response="Answer text",
+    )
 
 
 def test_like_delegates_to_repository():

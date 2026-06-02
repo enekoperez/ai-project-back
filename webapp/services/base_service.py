@@ -42,15 +42,21 @@ class BaseService:
     def _to_millis(dt):
         return int(dt.timestamp() * 1000) if dt else None
 
-    # TODO: def get_chat_history():
-    # code...
+    def get_chat_history(self, user_id, key_2=None):
+        chat_log_key, _ = self._create_chat_log_key_and_display_name(user_id=user_id, key_2=key_2)
+        history = self.chat_log_repository.get_history(key=chat_log_key)
+        for entry in history:
+            created_at = entry['created_at']
+            entry['created_at'] = self._to_iso(created_at)
+            entry['created_at_utc_in_millis'] = self._to_millis(created_at)
+            if entry['role'] == 'model':
+                entry['text'] = self._try_json_loads(entry['text'])
+        return history
 
-    def _call_llm_and_log(self, chat_log_key, system_prompt, user_prompt, is_chat=False, is_rag=False):
+    def _call_llm_and_log(self, chat_log_key, user_question, system_prompt, user_prompt, is_chat=False, is_rag=False):
         # Exactly one mode must be selected: chat XOR RAG.
         if is_chat == is_rag:
             raise ValueError("Exactly one of is_chat or is_rag must be true.")
-
-        chat_log = self.chat_log_repository.create(key=chat_log_key)
 
         chat_api_response, *_ = self.ai_service.call_llm(
             system_prompt=system_prompt,
@@ -58,8 +64,14 @@ class BaseService:
             max_output_tokens=_MAX_OUTPUT_TOKENS,
             is_chat=is_chat,
             is_rag=is_rag,
-            # history=self.chat_log_repository.get_history(metadata=metadata),
+            history=self.chat_log_repository.get_history(key=chat_log_key),
             # cache_name=cache_name,
+        )
+
+        chat_log = self.chat_log_repository.create(
+            key=chat_log_key,
+            user_question=user_question,
+            chat_api_response=chat_api_response,
         )
         return chat_log, chat_api_response
 

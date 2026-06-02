@@ -1,4 +1,6 @@
 import pytest
+from datetime import datetime
+from unittest.mock import Mock
 
 from webapp.services.base_service import BaseService
 
@@ -50,6 +52,7 @@ def test_call_llm_and_log_rejects_chat_and_rag_together():
     with pytest.raises(ValueError, match="Exactly one of is_chat or is_rag must be true."):
         service._call_llm_and_log(
             chat_log_key={"user_id": "user-1"},
+            user_question="question",
             system_prompt="system",
             user_prompt="user",
             is_chat=True,
@@ -63,8 +66,38 @@ def test_call_llm_and_log_rejects_missing_chat_and_rag_mode():
     with pytest.raises(ValueError, match="Exactly one of is_chat or is_rag must be true."):
         service._call_llm_and_log(
             chat_log_key={"user_id": "user-1"},
+            user_question="question",
             system_prompt="system",
             user_prompt="user",
             is_chat=False,
             is_rag=False,
         )
+
+
+def test_get_chat_history_formats_dates_and_model_json():
+    created_at = datetime(2026, 6, 1, 12, 0, 0)
+    repository = Mock()
+    repository.get_history.return_value = [
+        {"chat_log_id": "chat-1", "role": "user", "text": "Question", "created_at": created_at},
+        {"chat_log_id": "chat-1", "role": "model", "text": '{"answer": "Answer"}', "created_at": created_at},
+    ]
+    service = BaseService.__new__(BaseService)
+    service.chat_log_repository = repository
+
+    assert service.get_chat_history(user_id="user-1", key_2="thread-1") == [
+        {
+            "chat_log_id": "chat-1",
+            "role": "user",
+            "text": "Question",
+            "created_at": "2026-06-01T12:00:00",
+            "created_at_utc_in_millis": BaseService._to_millis(created_at),
+        },
+        {
+            "chat_log_id": "chat-1",
+            "role": "model",
+            "text": {"answer": "Answer"},
+            "created_at": "2026-06-01T12:00:00",
+            "created_at_utc_in_millis": BaseService._to_millis(created_at),
+        },
+    ]
+    repository.get_history.assert_called_once_with(key={"user_id": "user-1", "key_2": "thread-1"})

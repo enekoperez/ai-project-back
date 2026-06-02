@@ -16,6 +16,7 @@ class ChatService(BaseService):
 
         chat_log, chat_api_response = self._call_llm_and_log(
             chat_log_key=chat_log_key,
+            user_question=question,
             system_prompt=build_system_prompt(),
             user_prompt=build_user_prompt(chunks=top_chunks, question=question),
             is_rag=True,
