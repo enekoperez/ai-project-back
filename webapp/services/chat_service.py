@@ -2,10 +2,10 @@ from webapp.dto.chat_dto import chat_to_dict
 from webapp.prompts.chat_prompt import build_system_prompt, build_user_prompt
 from webapp.repositories.chat_repository import ChatRepository
 from webapp.services.ai_service import AiService
-from webapp.services.base_chat_service import BaseChatService
+from webapp.services.base_service import BaseService
 
 
-class ChatService(BaseChatService):
+class ChatService(BaseService):
     def __init__(self):
         super().__init__()
         self.ai_service = AiService()

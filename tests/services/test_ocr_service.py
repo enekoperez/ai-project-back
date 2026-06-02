@@ -2,12 +2,12 @@ from datetime import datetime
 from unittest.mock import Mock
 
 from webapp.prompts.ocr_prompt import build_system_prompt
-from webapp.services.base_chat_service import BaseChatService
+from webapp.services.base_service import BaseService
 from webapp.services.ocr_service import OcrService
 
 
-def test_ocr_service_inherits_base_chat_service():
-    assert isinstance(OcrService(), BaseChatService)
+def test_ocr_service_inherits_base_service():
+    assert isinstance(OcrService(), BaseService)
 
 
 def test_ask_creates_ocr_row_and_calls_ai_service_with_file_and_questions():

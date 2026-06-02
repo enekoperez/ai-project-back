@@ -2,12 +2,12 @@ from datetime import datetime
 from unittest.mock import Mock
 
 from webapp.prompts.chat_prompt import build_system_prompt, build_user_prompt
-from webapp.services.base_chat_service import BaseChatService
+from webapp.services.base_service import BaseService
 from webapp.services.chat_service import ChatService
 
 
-def test_chat_service_inherits_base_chat_service():
-    assert isinstance(ChatService(), BaseChatService)
+def test_chat_service_inherits_base_service():
+    assert isinstance(ChatService(), BaseService)
 
 
 def test_ask_creates_chat_row_and_calls_ai_service_with_question():

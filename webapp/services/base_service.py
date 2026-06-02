@@ -1,7 +1,7 @@
 _MAX_USER_QUESTION_CHARS = 3000
 
 
-class BaseChatService:
+class BaseService:
     def __init__(self):
         pass
 
