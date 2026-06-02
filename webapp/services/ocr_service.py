@@ -1,14 +1,12 @@
 from webapp.dto.ocr_dto import ocr_to_dict
 from webapp.prompts.ocr_prompt import build_system_prompt, build_user_prompt
 from webapp.repositories.ocr_log_repository import OcrLogRepository
-from webapp.services.ai_service import AiService
 from webapp.services.base_service import BaseService
 
 
 class OcrService(BaseService):
     def __init__(self):
         super().__init__()
-        self.ai_service = AiService()
         self.ocr_log_repository = OcrLogRepository()
 
     def ask(self, request_json):

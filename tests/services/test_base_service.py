@@ -26,3 +26,17 @@ def test_normalize_user_input_converts_non_string_scalar_to_string():
     service = BaseService()
 
     assert service._normalize_user_input(123) == "123"
+
+
+def test_key_and_display_name_uses_user_id_only():
+    key, display_name = BaseService._key_and_display_name(user_id="user-1")
+
+    assert key == {"user_id": "user-1"}
+    assert display_name == '{"user_id": "user-1"}'
+
+
+def test_key_and_display_name_includes_second_key_when_present():
+    key, display_name = BaseService._key_and_display_name(user_id="user-1", key_2="thread-1")
+
+    assert key == {"user_id": "user-1", "key_2": "thread-1"}
+    assert display_name == '{"user_id": "user-1", "key_2": "thread-1"}'

@@ -33,9 +33,13 @@ def test_ask_creates_chat_row_and_calls_ai_service_with_question():
     response = service.ask({"question": "  How do I extract invoice totals?  "})
 
     assert response == {
-        "id": "chat-1",
-        "response": "Use the OCR endpoint for invoice files.",
-        "created_at": "2026-06-01T12:00:00",
+        "chat_log_id": "chat-1",
+        "chat_api_response": "Use the OCR endpoint for invoice files.",
+        "date": "2026-06-01T12:00:00",
+        "date_utc_in_millis": 1780308000000,
+        "cache_create_time": None,
+        "cache_create_time_utc_in_millis": None,
+        "source_names_and_scores": [{"source_name": "ocr.md", "score": 0.9}],
     }
     chat_log_repository.create.assert_called_once_with()
     service.rag_service.get_top_chunks.assert_called_once_with(question="How do I extract invoice totals?")
@@ -45,6 +49,8 @@ def test_ask_creates_chat_row_and_calls_ai_service_with_question():
             chunks=[{"source_name": "ocr.md", "score": 0.9, "text": "Use the OCR endpoint for invoice files."}],
             question="How do I extract invoice totals?",
         ),
+        max_output_tokens=6666,
+        is_chat=False,
         is_rag=True,
     )
 
@@ -63,7 +69,11 @@ def test_ask_allows_missing_created_at():
     response = service.ask({"question": "What can this app do?"})
 
     assert response == {
-        "id": "chat-1",
-        "response": "Answer text",
-        "created_at": None,
+        "chat_log_id": "chat-1",
+        "chat_api_response": "Answer text",
+        "date": None,
+        "date_utc_in_millis": None,
+        "cache_create_time": None,
+        "cache_create_time_utc_in_millis": None,
+        "source_names_and_scores": [],
     }
