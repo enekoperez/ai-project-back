@@ -6,7 +6,7 @@ from webapp.services.ai_service import AiService
 from webapp.services.doc_service import DocService
 
 _MAX_CHUNK_CHARS = 1600  # Text	- Supports up to 8,192 tokens.
-_TOP_K = 3  # Retrieval size tradeoff: 3 is lean, 5 is better for multi-step help questions, 8 is broader but noisier.
+_TOP_K = 5  # Retrieval size tradeoff: 3 is lean, 5 is better for multi-step help questions, 8 is broader but noisier.
 _MIN_SCORE = 0.6  # Cosine-similarity floor: 0.5 lenient, 0.6 balanced, 0.7 strict. Chunks below this are dropped.
 
 
