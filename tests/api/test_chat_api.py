@@ -15,7 +15,7 @@ def make_client(monkeypatch, service):
 
 def test_answer_chat_question_returns_response(monkeypatch):
     service = Mock()
-    service.ask.return_value = {
+    service.chat.return_value = {
         "id": "chat-1",
         "response": "Use the invoice OCR endpoint.",
         "created_at": "2026-06-01T12:00:00",
@@ -31,12 +31,12 @@ def test_answer_chat_question_returns_response(monkeypatch):
         "response": "Use the invoice OCR endpoint.",
         "created_at": "2026-06-01T12:00:00",
     }
-    service.ask.assert_called_once_with("user-1", request_json)
+    service.chat.assert_called_once_with("user-1", request_json)
 
 
 def test_answer_chat_question_uses_user_id_header(monkeypatch):
     service = Mock()
-    service.ask.return_value = {"chat_log_id": "chat-1"}
+    service.chat.return_value = {"chat_log_id": "chat-1"}
     client = make_client(monkeypatch, service)
 
     request_json = {"user_id": "body-user", "question": "How do I extract invoice totals?"}
@@ -44,17 +44,31 @@ def test_answer_chat_question_uses_user_id_header(monkeypatch):
 
     assert response.status_code == 200
     assert response.get_json() == {"chat_log_id": "chat-1"}
-    service.ask.assert_called_once_with("header-user", request_json)
+    service.chat.assert_called_once_with("header-user", request_json)
 
 
-def test_get_chat_is_not_available(monkeypatch):
+def test_get_chat_returns_history_from_body_user_id(monkeypatch):
     service = Mock()
+    service.get_chat.return_value = [{"chat_log_id": "chat-1", "role": "user", "text": "Question"}]
     client = make_client(monkeypatch, service)
 
-    response = client.get("/ai/chat/")
+    response = client.get("/ai/chat/", json={"user_id": "user-1"})
 
-    assert response.status_code == 405
-    service.ask.assert_not_called()
+    assert response.status_code == 200
+    assert response.get_json() == [{"chat_log_id": "chat-1", "role": "user", "text": "Question"}]
+    service.get_chat.assert_called_once_with(user_id="user-1")
+
+
+def test_get_chat_uses_user_id_header(monkeypatch):
+    service = Mock()
+    service.get_chat.return_value = []
+    client = make_client(monkeypatch, service)
+
+    response = client.get("/ai/chat/", json={"user_id": "body-user"}, headers={"User-Id": "header-user"})
+
+    assert response.status_code == 200
+    assert response.get_json() == []
+    service.get_chat.assert_called_once_with(user_id="header-user")
 
 
 def test_like_chat_log_returns_feedback_state(monkeypatch):

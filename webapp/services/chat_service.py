@@ -8,7 +8,7 @@ class ChatService(BaseService):
         super().__init__()
         self.rag_service = RagService()
 
-    def ask(self, user_id, request_json):
+    def chat(self, user_id, request_json):
         question = self._normalize_user_input(_input=request_json["question"])
 
         chat_log_key, _ = self._create_chat_log_key_and_display_name(user_id=user_id)
@@ -23,6 +23,9 @@ class ChatService(BaseService):
         )
         # return chat_to_dict(db_obj=chat_log, response=chat_api_response)
         return self._chat_output(chat_log=chat_log, chat_api_response=chat_api_response, top_chunks=top_chunks)
+
+    def get_chat(self, user_id):
+        return self.get_chat_history(user_id=user_id)
 
     def like(self, chat_log_id):
         return self.chat_log_repository.like(chat_log_id=chat_log_id)

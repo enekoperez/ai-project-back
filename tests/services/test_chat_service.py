@@ -10,7 +10,7 @@ def test_chat_service_inherits_base_service():
     assert isinstance(ChatService(), BaseService)
 
 
-def test_ask_creates_chat_row_and_calls_ai_service_with_question():
+def test_chat_creates_chat_row_and_calls_ai_service_with_question():
     ai_service = Mock()
     ai_service.call_llm.return_value = (
         "Use the OCR endpoint for invoice files.",
@@ -32,7 +32,7 @@ def test_ask_creates_chat_row_and_calls_ai_service_with_question():
         {"source_name": "ocr.md", "score": 0.9, "text": "Use the OCR endpoint for invoice files."}
     ]
 
-    response = service.ask(user_id="user-1", request_json={"question": "  How do I extract invoice totals?  "})
+    response = service.chat(user_id="user-1", request_json={"question": "  How do I extract invoice totals?  "})
 
     assert response == {
         "chat_log_id": "chat-1",
@@ -62,7 +62,7 @@ def test_ask_creates_chat_row_and_calls_ai_service_with_question():
     )
 
 
-def test_ask_allows_missing_created_at():
+def test_chat_allows_missing_created_at():
     ai_service = Mock()
     ai_service.call_llm.return_value = ("Answer text", "model", 1.0, None, [], 100)
     chat_log_repository = Mock()
@@ -73,7 +73,7 @@ def test_ask_allows_missing_created_at():
     service.rag_service = Mock()
     service.rag_service.get_top_chunks.return_value = []
 
-    response = service.ask(user_id="user-1", request_json={"question": "What can this app do?"})
+    response = service.chat(user_id="user-1", request_json={"question": "What can this app do?"})
 
     assert response == {
         "chat_log_id": "chat-1",
@@ -89,6 +89,15 @@ def test_ask_allows_missing_created_at():
         user_question="What can this app do?",
         chat_api_response="Answer text",
     )
+
+
+def test_get_chat_delegates_to_base_history(monkeypatch):
+    service = ChatService()
+    history = [{"chat_log_id": "chat-1", "role": "user", "text": "Question"}]
+    monkeypatch.setattr(service, "get_chat_history", Mock(return_value=history))
+
+    assert service.get_chat(user_id="user-1") == history
+    service.get_chat_history.assert_called_once_with(user_id="user-1")
 
 
 def test_like_delegates_to_repository():
