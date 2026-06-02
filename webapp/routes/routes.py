@@ -2,7 +2,6 @@ from flask import jsonify
 
 from webapp.api.chat_api import chat
 from webapp.api.ocr_api import ocr
-from webapp.api.rag_api import rag
 
 
 def init_routes(flask_app):
@@ -14,4 +13,3 @@ def init_routes(flask_app):
 
     flask_app.register_blueprint(chat, url_prefix="/ai/chat/")
     flask_app.register_blueprint(ocr, url_prefix="/ai/ocr/")
-    flask_app.register_blueprint(rag, url_prefix="/ai/rag/")
