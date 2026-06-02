@@ -31,7 +31,7 @@ def test_ask_creates_chat_row_and_calls_ai_service_with_question():
         {"source_name": "ocr.md", "score": 0.9, "text": "Use the OCR endpoint for invoice files."}
     ]
 
-    response = service.ask({"question": "  How do I extract invoice totals?  "})
+    response = service.ask(user_id="user-1", request_json={"question": "  How do I extract invoice totals?  "})
 
     assert response == {
         "chat_log_id": "chat-1",
@@ -42,7 +42,7 @@ def test_ask_creates_chat_row_and_calls_ai_service_with_question():
         "cache_create_time_utc_in_millis": None,
         "source_names_and_scores": [{"source_name": "ocr.md", "score": 0.9}],
     }
-    chat_log_repository.create.assert_called_once_with()
+    chat_log_repository.create.assert_called_once_with(key={"user_id": "user-1"})
     service.rag_service.get_top_chunks.assert_called_once_with(question="How do I extract invoice totals?")
     ai_service.call_llm.assert_called_once_with(
         system_prompt=build_system_prompt(),
@@ -67,7 +67,7 @@ def test_ask_allows_missing_created_at():
     service.rag_service = Mock()
     service.rag_service.get_top_chunks.return_value = []
 
-    response = service.ask({"question": "What can this app do?"})
+    response = service.ask(user_id="user-1", request_json={"question": "What can this app do?"})
 
     assert response == {
         "chat_log_id": "chat-1",

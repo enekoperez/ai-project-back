@@ -22,7 +22,7 @@ def test_answer_chat_question_returns_response(monkeypatch):
     }
     client = make_client(monkeypatch, service)
 
-    request_json = {"question": "How do I extract invoice totals?"}
+    request_json = {"user_id": "user-1", "question": "How do I extract invoice totals?"}
     response = client.post("/ai/chat/", json=request_json)
 
     assert response.status_code == 200
@@ -31,7 +31,20 @@ def test_answer_chat_question_returns_response(monkeypatch):
         "response": "Use the invoice OCR endpoint.",
         "created_at": "2026-06-01T12:00:00",
     }
-    service.ask.assert_called_once_with(request_json)
+    service.ask.assert_called_once_with("user-1", request_json)
+
+
+def test_answer_chat_question_uses_user_id_header(monkeypatch):
+    service = Mock()
+    service.ask.return_value = {"chat_log_id": "chat-1"}
+    client = make_client(monkeypatch, service)
+
+    request_json = {"user_id": "body-user", "question": "How do I extract invoice totals?"}
+    response = client.post("/ai/chat/", json=request_json, headers={"User-Id": "header-user"})
+
+    assert response.status_code == 200
+    assert response.get_json() == {"chat_log_id": "chat-1"}
+    service.ask.assert_called_once_with("header-user", request_json)
 
 
 def test_get_chat_is_not_available(monkeypatch):

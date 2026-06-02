@@ -8,8 +8,8 @@ def test_chat_log_repository_create_delegates_to_model(monkeypatch):
     chat_log_model.objects.create.return_value = "created-chat"
     monkeypatch.setattr("webapp.repositories.chat_log_repository.ChatLog", chat_log_model)
 
-    assert ChatLogRepository().create() == "created-chat"
-    chat_log_model.objects.create.assert_called_once_with()
+    assert ChatLogRepository().create(key={"user_id": "user-1"}) == "created-chat"
+    chat_log_model.objects.create.assert_called_once_with(key={"user_id": "user-1"})
 
 
 def test_chat_log_repository_like_sets_liked_and_clears_disliked(monkeypatch):

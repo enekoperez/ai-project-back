@@ -1,3 +1,5 @@
+from mongoengine import DictField
+
 from webapp.models.chat_log_domain import ChatLog
 
 
@@ -5,6 +7,10 @@ def test_chat_log_model_has_created_at_default():
     field = ChatLog._fields["created_at"]
 
     assert field.default is not None
+
+
+def test_chat_log_model_has_key_field():
+    assert isinstance(ChatLog._fields["key"], DictField)
 
 
 def test_chat_log_model_has_feedback_fields():
