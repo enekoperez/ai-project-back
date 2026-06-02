@@ -20,11 +20,11 @@ def test_ask_creates_ocr_row_and_calls_ai_service_with_file_and_questions():
         [],
         100,
     )
-    ocr_repository = Mock()
-    ocr_repository.create.return_value = Mock(id="ocr-1", created_at=datetime(2026, 6, 1, 12, 0, 0))
+    ocr_log_repository = Mock()
+    ocr_log_repository.create.return_value = Mock(id="ocr-1", created_at=datetime(2026, 6, 1, 12, 0, 0))
     service = OcrService()
     service.ai_service = ai_service
-    service.ocr_repository = ocr_repository
+    service.ocr_log_repository = ocr_log_repository
 
     response = service.ask({
         "file_url": "https://example.com/docs/invoice.PDF?token=abc",
@@ -39,7 +39,7 @@ def test_ask_creates_ocr_row_and_calls_ai_service_with_file_and_questions():
         },
         "created_at": "2026-06-01T12:00:00",
     }
-    ocr_repository.create.assert_called_once_with()
+    ocr_log_repository.create.assert_called_once_with()
     ai_service.call_llm.assert_called_once_with(
         system_prompt=build_system_prompt(),
         user_prompt=(
@@ -72,11 +72,11 @@ def test_ask_creates_ocr_row_and_calls_ai_service_with_file_and_questions():
 def test_ask_returns_raw_ai_response_when_response_is_not_valid_json():
     ai_service = Mock()
     ai_service.call_llm.return_value = ("The invoice total is 120.00.", "model", 0.0, None, [], 100)
-    ocr_repository = Mock()
-    ocr_repository.create.return_value = Mock(id="ocr-1", created_at=None)
+    ocr_log_repository = Mock()
+    ocr_log_repository.create.return_value = Mock(id="ocr-1", created_at=None)
     service = OcrService()
     service.ai_service = ai_service
-    service.ocr_repository = ocr_repository
+    service.ocr_log_repository = ocr_log_repository
 
     response = service.ask({
         "file_url": "https://example.com/docs/invoice.pdf",

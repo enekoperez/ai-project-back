@@ -2,7 +2,7 @@ import json
 
 from webapp.dto.ocr_dto import ocr_to_dict
 from webapp.prompts.ocr_prompt import build_system_prompt, build_user_prompt
-from webapp.repositories.ocr_repository import OcrRepository
+from webapp.repositories.ocr_log_repository import OcrLogRepository
 from webapp.services.ai_service import AiService
 from webapp.services.base_service import BaseService
 
@@ -11,7 +11,7 @@ class OcrService(BaseService):
     def __init__(self):
         super().__init__()
         self.ai_service = AiService()
-        self.ocr_repository = OcrRepository()
+        self.ocr_log_repository = OcrLogRepository()
 
     @staticmethod
     def _try_json_loads(s):
@@ -21,7 +21,7 @@ class OcrService(BaseService):
             return s
 
     def ask(self, request_json):
-        ocr_obj = self.ocr_repository.create()
+        ocr_log = self.ocr_log_repository.create()
 
         file_url = request_json["file_url"]
         questions = self._normalize_user_input(_input=request_json["questions"])
@@ -33,7 +33,7 @@ class OcrService(BaseService):
             document_data={"url": file_url, "extension": "pdf"},
         )
         response = self._try_json_loads(s=chat_api_response)
-        return ocr_to_dict(db_obj=ocr_obj, response=response)
+        return ocr_to_dict(db_obj=ocr_log, response=response)
 
     @staticmethod
     def _response_format(questions):
