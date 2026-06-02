@@ -25,6 +25,10 @@ def test_ask_creates_chat_row_and_calls_ai_service_with_question():
     service = ChatService()
     service.ai_service = ai_service
     service.chat_repository = chat_repository
+    service.rag_service = Mock()
+    service.rag_service.get_top_chunks.return_value = [
+        {"source_name": "ocr.md", "score": 0.9, "text": "Use the OCR endpoint for invoice files."}
+    ]
 
     response = service.ask({"question": "  How do I extract invoice totals?  "})
 
@@ -34,10 +38,14 @@ def test_ask_creates_chat_row_and_calls_ai_service_with_question():
         "created_at": "2026-06-01T12:00:00",
     }
     chat_repository.create.assert_called_once_with()
+    service.rag_service.get_top_chunks.assert_called_once_with(question="How do I extract invoice totals?")
     ai_service.call_llm.assert_called_once_with(
         system_prompt=build_system_prompt(),
-        user_prompt=build_user_prompt(question="How do I extract invoice totals?"),
-        is_chat=True,
+        user_prompt=build_user_prompt(
+            chunks=[{"source_name": "ocr.md", "score": 0.9, "text": "Use the OCR endpoint for invoice files."}],
+            question="How do I extract invoice totals?",
+        ),
+        is_rag=True,
     )
 
 
@@ -49,6 +57,8 @@ def test_ask_allows_missing_created_at():
     service = ChatService()
     service.ai_service = ai_service
     service.chat_repository = chat_repository
+    service.rag_service = Mock()
+    service.rag_service.get_top_chunks.return_value = []
 
     response = service.ask({"question": "What can this app do?"})
 
