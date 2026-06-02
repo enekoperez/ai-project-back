@@ -2,7 +2,12 @@ from datetime import datetime
 from unittest.mock import Mock
 
 from webapp.prompts.ocr_prompt import build_system_prompt
+from webapp.services.base_chat_service import BaseChatService
 from webapp.services.ocr_service import OcrService
+
+
+def test_ocr_service_inherits_base_chat_service():
+    assert isinstance(OcrService(), BaseChatService)
 
 
 def test_ask_creates_ocr_row_and_calls_ai_service_with_file_and_questions():
@@ -23,7 +28,7 @@ def test_ask_creates_ocr_row_and_calls_ai_service_with_file_and_questions():
 
     response = service.ask({
         "file_url": "https://example.com/docs/invoice.PDF?token=abc",
-        "questions": ["What is the total?", "What is the invoice number?"],
+        "questions": ["  What is the total?  ", "  What is the invoice number?  "],
     })
 
     assert response == {

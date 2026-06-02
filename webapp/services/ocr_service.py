@@ -4,10 +4,12 @@ from webapp.dto.ocr_dto import ocr_to_dict
 from webapp.prompts.ocr_prompt import build_system_prompt, build_user_prompt
 from webapp.repositories.ocr_repository import OcrRepository
 from webapp.services.ai_service import AiService
+from webapp.services.base_chat_service import BaseChatService
 
 
-class OcrService:
+class OcrService(BaseChatService):
     def __init__(self):
+        super().__init__()
         self.ai_service = AiService()
         self.ocr_repository = OcrRepository()
 
@@ -22,7 +24,7 @@ class OcrService:
         ocr_obj = self.ocr_repository.create()
 
         file_url = request_json["file_url"]
-        questions = request_json["questions"]
+        questions = self._normalize_user_input(_input=request_json["questions"])
 
         chat_api_response, *_ = self.ai_service.call_llm(
             system_prompt=build_system_prompt(),
