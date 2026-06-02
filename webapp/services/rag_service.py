@@ -32,7 +32,7 @@ class RagService:
             title = "none"
         return f"title: {title} | text: {content}"
 
-    def sync(self):
+    def sync(self):  # TODO: Batch embedding
         model = config.Config.DEFAULT_GOOGLE_AI_EMBEDDING_MODEL
 
         # Get current source files from Cloud.
@@ -77,7 +77,7 @@ class RagService:
         return True
 
     @staticmethod
-    def _chunk_markdown(text):
+    def _chunk_markdown(text):  # TODO: optimize
         text = text.strip()  # Removes whitespace from the start and end of the full text.
         if not text:  # If the text is empty after stripping, returns an empty list.
             return []
