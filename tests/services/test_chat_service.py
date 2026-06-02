@@ -21,7 +21,8 @@ def test_ask_creates_chat_row_and_calls_ai_service_with_question():
         100,
     )
     chat_log_repository = Mock()
-    chat_log_repository.create.return_value = Mock(id="chat-1", created_at=datetime(2026, 6, 1, 12, 0, 0))
+    created_at = datetime(2026, 6, 1, 12, 0, 0)
+    chat_log_repository.create.return_value = Mock(id="chat-1", created_at=created_at)
     service = ChatService()
     service.ai_service = ai_service
     service.chat_log_repository = chat_log_repository
@@ -36,7 +37,7 @@ def test_ask_creates_chat_row_and_calls_ai_service_with_question():
         "chat_log_id": "chat-1",
         "chat_api_response": "Use the OCR endpoint for invoice files.",
         "date": "2026-06-01T12:00:00",
-        "date_utc_in_millis": 1780308000000,
+        "date_utc_in_millis": BaseService._to_millis(created_at),
         "cache_create_time": None,
         "cache_create_time_utc_in_millis": None,
         "source_names_and_scores": [{"source_name": "ocr.md", "score": 0.9}],
