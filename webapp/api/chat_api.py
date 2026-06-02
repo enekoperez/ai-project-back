@@ -8,7 +8,8 @@ chat_service = ChatService()
 
 @chat.route("", methods=["POST"])
 def ask():
-    response = chat_service.ask(request.json)
+    user_id = request.headers.get('User-Id') or request.json['user_id']
+    response = chat_service.ask(user_id, request.json)
     return jsonify(response), 200
 
 

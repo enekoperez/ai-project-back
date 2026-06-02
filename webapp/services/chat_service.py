@@ -8,12 +8,14 @@ class ChatService(BaseService):
         super().__init__()
         self.rag_service = RagService()
 
-    def ask(self, request_json):
+    def ask(self, user_id, request_json):
         question = self._normalize_user_input(_input=request_json["question"])
 
+        chat_log_key, _ = self._create_chat_log_key_and_display_name(user_id=user_id)
         top_chunks = self.rag_service.get_top_chunks(question=question)
 
         chat_log, chat_api_response = self._call_llm_and_log(
+            chat_log_key=chat_log_key,
             system_prompt=build_system_prompt(),
             user_prompt=build_user_prompt(chunks=top_chunks, question=question),
             is_rag=True,

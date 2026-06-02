@@ -20,12 +20,12 @@ class BaseService:
         return str(_input).strip()[:_MAX_USER_QUESTION_CHARS]
 
     @staticmethod
-    def _key_and_display_name(user_id, key_2=None):  # TODO: use it
-        key = {'user_id': user_id}
+    def _create_chat_log_key_and_display_name(user_id, key_2=None):
+        chat_log_key = {'user_id': user_id}
         if key_2:
-            key['key_2'] = key_2
-        display_name = json.dumps(key)
-        return key, display_name
+            chat_log_key['key_2'] = key_2
+        display_name = json.dumps(chat_log_key)
+        return chat_log_key, display_name
 
     @staticmethod
     def _try_json_loads(s):
@@ -45,12 +45,12 @@ class BaseService:
     # TODO: def get_chat_history():
     # code...
 
-    def _call_llm_and_log(self, system_prompt, user_prompt, is_chat=False, is_rag=False):
+    def _call_llm_and_log(self, chat_log_key, system_prompt, user_prompt, is_chat=False, is_rag=False):
         # Exactly one mode must be selected: chat XOR RAG.
         if is_chat == is_rag:
             raise ValueError("Exactly one of is_chat or is_rag must be true.")
 
-        chat_log = self.chat_log_repository.create()
+        chat_log = self.chat_log_repository.create(key=chat_log_key)
 
         chat_api_response, *_ = self.ai_service.call_llm(
             system_prompt=system_prompt,

@@ -3,8 +3,8 @@ from webapp.models.chat_log_domain import ChatLog
 
 class ChatLogRepository:
     @staticmethod
-    def create():
-        return ChatLog.objects.create()
+    def create(key):
+        return ChatLog.objects.create(key=key)
 
     @staticmethod
     def like(chat_log_id):
