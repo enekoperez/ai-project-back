@@ -20,3 +20,9 @@ class ChatService(BaseService):
         )
         # return chat_to_dict(db_obj=chat_log, response=chat_api_response)
         return self._chat_output(chat_log=chat_log, chat_api_response=chat_api_response, top_chunks=top_chunks)
+
+    def like(self, chat_log_id):
+        return self.chat_log_repository.like(chat_log_id=chat_log_id)
+
+    def dislike(self, chat_log_id):
+        return self.chat_log_repository.dislike(chat_log_id=chat_log_id)

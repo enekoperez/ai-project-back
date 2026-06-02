@@ -20,7 +20,7 @@ class BaseService:
         return str(_input).strip()[:_MAX_USER_QUESTION_CHARS]
 
     @staticmethod
-    def _key_and_display_name(user_id, key_2=None):
+    def _key_and_display_name(user_id, key_2=None):  # TODO: use it
         key = {'user_id': user_id}
         if key_2:
             key['key_2'] = key_2
