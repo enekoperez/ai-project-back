@@ -18,11 +18,12 @@ def test_lang_simple_post_returns_response(monkeypatch):
     service.call_simple.return_value = {"message": "Hello world from SIMPLE"}
     client = make_client(monkeypatch, service)
 
-    response = client.post("/ai/lang/simple")
+    request_json = {"question": "What's the weather in San Francisco?"}
+    response = client.post("/ai/lang/simple", json=request_json)
 
     assert response.status_code == 200
     assert response.get_json() == {"message": "Hello world from SIMPLE"}
-    service.call_simple.assert_called_once_with()
+    service.call_simple.assert_called_once_with(request_json)
 
 
 def test_lang_complex_post_returns_response(monkeypatch):
