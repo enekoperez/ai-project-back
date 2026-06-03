@@ -242,6 +242,12 @@ def test_weather_tool_returns_error_when_city_not_found(monkeypatch):
     assert requested_urls[0].startswith("https://geocoding-api.open-meteo.com/v1/search?")
 
 
+def test_weather_tool_returns_error_when_city_is_blank():
+    tools = ChatTools()
+
+    assert tools.dispatch()["get_weather"](city="   ") == {"error": "City is required", "city": ""}
+
+
 def test_weather_tool_returns_error_when_api_fails(monkeypatch):
     def urlopen(req, timeout):
         raise urllib.error.URLError("network down")
