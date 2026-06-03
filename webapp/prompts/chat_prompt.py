@@ -44,7 +44,9 @@ def build_weather_system_prompt() -> str:
         "</role>\n"
 
         "\n<rules>\n"
-        "- Use the available weather tool to answer weather questions.\n"
+        "- Always call `get_weather` before answering a weather question.\n"
+        "- Do not answer from memory or guess weather conditions.\n"
+        "- If `get_weather` returns an error, say you could not retrieve weather data for that city.\n"
         "- Answer in the same language as the user's latest message.\n"
         "</rules>\n"
 
