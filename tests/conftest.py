@@ -26,6 +26,13 @@ def _install_ai_dependency_stubs():
             self.models = types.SimpleNamespace()
             self.caches = types.SimpleNamespace()
 
+    def _typed_config(**kwargs):
+        return kwargs
+
+    genai_types_module.FunctionDeclaration = _typed_config
+    genai_types_module.Schema = _typed_config
+    genai_types_module.Type = types.SimpleNamespace(OBJECT="OBJECT", STRING="STRING")
+
     genai_errors_module.ClientError = ClientError
     genai_module.Client = _Client
     genai_module.errors = genai_errors_module

@@ -53,7 +53,17 @@ class BaseService:
                 entry['text'] = self._try_json_loads(entry['text'])
         return history
 
-    def _call_llm_and_log(self, chat_log_key, user_question, system_prompt, user_prompt, is_chat=False, is_rag=False):
+    def _call_llm_and_log(
+            self,
+            chat_log_key,
+            user_question,
+            system_prompt,
+            user_prompt,
+            is_chat=False,
+            is_rag=False,
+            tool_declarations=None,
+            tool_dispatch=None,
+    ):
         # Exactly one mode must be selected: chat XOR RAG.
         if is_chat == is_rag:
             raise ValueError("Exactly one of is_chat or is_rag must be true.")
@@ -65,6 +75,8 @@ class BaseService:
             is_chat=is_chat,
             is_rag=is_rag,
             history=self.chat_log_repository.get_history(key=chat_log_key),
+            tool_declarations=tool_declarations,
+            tool_dispatch=tool_dispatch,
             # cache_name=cache_name,
         )
 

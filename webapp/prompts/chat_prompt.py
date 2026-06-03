@@ -35,3 +35,25 @@ def build_user_prompt(chunks: list, question: str) -> str:
 
         f"Question: {question}"
     )
+
+
+def build_weather_system_prompt() -> str:
+    return (
+        "<role>\n"
+        "You are a concise weather assistant.\n"
+        "</role>\n"
+
+        "\n<rules>\n"
+        "- Use the available weather tool to answer weather questions.\n"
+        "- Answer in the same language as the user's latest message.\n"
+        "</rules>\n"
+
+        "\n<format>\n"
+        "- Keep the answer short and practical.\n"
+        "- Return only plain text, never markdown.\n"
+        "</format>"
+    )
+
+
+def build_weather_user_prompt(question: str) -> str:
+    return f"Question: {question}"

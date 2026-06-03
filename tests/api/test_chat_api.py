@@ -47,6 +47,32 @@ def test_answer_chat_question_uses_user_id_header(monkeypatch):
     service.chat.assert_called_once_with("header-user", request_json)
 
 
+def test_weather_chat_question_returns_response(monkeypatch):
+    service = Mock()
+    service.weather.return_value = {"chat_log_id": "chat-1", "chat_api_response": "Bad weather in Bilbao."}
+    client = make_client(monkeypatch, service)
+
+    request_json = {"user_id": "user-1", "question": "What's the weather in Bilbao?"}
+    response = client.post("/ai/chat/weather", json=request_json)
+
+    assert response.status_code == 200
+    assert response.get_json() == {"chat_log_id": "chat-1", "chat_api_response": "Bad weather in Bilbao."}
+    service.weather.assert_called_once_with("user-1", request_json)
+
+
+def test_weather_chat_uses_user_id_header(monkeypatch):
+    service = Mock()
+    service.weather.return_value = {"chat_log_id": "chat-1"}
+    client = make_client(monkeypatch, service)
+
+    request_json = {"user_id": "body-user", "question": "What's the weather in Oviedo?"}
+    response = client.post("/ai/chat/weather", json=request_json, headers={"User-Id": "header-user"})
+
+    assert response.status_code == 200
+    assert response.get_json() == {"chat_log_id": "chat-1"}
+    service.weather.assert_called_once_with("header-user", request_json)
+
+
 def test_get_chat_returns_history_from_body_user_id(monkeypatch):
     service = Mock()
     service.get_chat.return_value = [{"chat_log_id": "chat-1", "role": "user", "text": "Question"}]
@@ -111,3 +137,13 @@ def test_get_chat_like_is_not_available(monkeypatch):
 
     assert response.status_code == 405
     service.like.assert_not_called()
+
+
+def test_get_weather_chat_is_not_available(monkeypatch):
+    service = Mock()
+    client = make_client(monkeypatch, service)
+
+    response = client.get("/ai/chat/weather", json={"user_id": "user-1"})
+
+    assert response.status_code == 405
+    service.weather.assert_not_called()

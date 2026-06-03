@@ -25,6 +25,13 @@ def get_chat():
     return jsonify(response), 200
 
 
+@chat.route("weather", methods=["POST"])
+def create_weather_chat():
+    user_id = _request_user_id()
+    response = chat_service.weather(user_id, request.json)
+    return jsonify(response), 200
+
+
 @chat.route("<chat_log_id>/like", methods=["POST"])
 def like(chat_log_id):
     response = chat_service.like(chat_log_id=chat_log_id)

@@ -1,9 +1,15 @@
 from datetime import datetime
 from unittest.mock import Mock
 
-from webapp.prompts.chat_prompt import build_system_prompt, build_user_prompt
+from webapp.prompts.chat_prompt import (
+    build_system_prompt,
+    build_user_prompt,
+    build_weather_system_prompt,
+    build_weather_user_prompt,
+)
 from webapp.services.base_service import BaseService
 from webapp.services.chat_service import ChatService
+from webapp.tools.chat_tools import ChatTools
 
 
 def test_chat_service_inherits_base_service():
@@ -59,6 +65,8 @@ def test_chat_creates_chat_row_and_calls_ai_service_with_question():
         is_chat=False,
         is_rag=True,
         history=[],
+        tool_declarations=None,
+        tool_dispatch=None,
     )
 
 
@@ -89,6 +97,79 @@ def test_chat_allows_missing_created_at():
         user_question="What can this app do?",
         chat_api_response="Answer text",
     )
+
+
+def test_weather_chat_uses_tools_without_rag_and_separate_history():
+    ai_service = Mock()
+    ai_service.call_llm.return_value = (
+        "The weather in Bilbao is bad.",
+        "model",
+        1.0,
+        None,
+        [{"name": "get_weather", "args": {"city": "Bilbao"}}],
+        100,
+    )
+    chat_log_repository = Mock()
+    created_at = datetime(2026, 6, 1, 12, 0, 0)
+    chat_log_repository.create.return_value = Mock(id="chat-1", created_at=created_at)
+    chat_log_repository.get_history.return_value = []
+    service = ChatService()
+    service.ai_service = ai_service
+    service.chat_log_repository = chat_log_repository
+    service.rag_service = Mock()
+
+    response = service.weather(
+        user_id="user-1",
+        request_json={"question": "  What's the weather in Bilbao?  "},
+    )
+
+    assert response == {
+        "chat_log_id": "chat-1",
+        "chat_api_response": "The weather in Bilbao is bad.",
+        "date": "2026-06-01T12:00:00",
+        "date_utc_in_millis": BaseService._to_millis(created_at),
+        "cache_create_time": None,
+        "cache_create_time_utc_in_millis": None,
+        "source_names_and_scores": [],
+    }
+    service.rag_service.get_top_chunks.assert_not_called()
+    chat_log_repository.get_history.assert_called_once_with(key={"user_id": "user-1", "key_2": "weather"})
+    chat_log_repository.create.assert_called_once_with(
+        key={"user_id": "user-1", "key_2": "weather"},
+        user_question="What's the weather in Bilbao?",
+        chat_api_response="The weather in Bilbao is bad.",
+    )
+    ai_service.call_llm.assert_called_once_with(
+        system_prompt=build_weather_system_prompt(),
+        user_prompt=build_weather_user_prompt(question="What's the weather in Bilbao?"),
+        max_output_tokens=6666,
+        is_chat=True,
+        is_rag=False,
+        history=[],
+        tool_declarations=ChatTools().declarations(),
+        tool_dispatch=service.ai_service.call_llm.call_args.kwargs["tool_dispatch"],
+    )
+    assert set(ai_service.call_llm.call_args.kwargs["tool_dispatch"]) == {"get_weather"}
+
+
+def test_weather_tool_returns_good_weather():
+    tools = ChatTools()
+
+    assert tools.dispatch()["get_weather"](city="Oviedo") == {
+        "city": "Oviedo",
+        "forecast": "The weather in Oviedo is good.",
+        "condition": "good",
+    }
+
+
+def test_weather_tool_returns_bad_weather():
+    tools = ChatTools()
+
+    assert tools.dispatch()["get_weather"](city="Bilbao") == {
+        "city": "Bilbao",
+        "forecast": "The weather in Bilbao is bad.",
+        "condition": "bad",
+    }
 
 
 def test_get_chat_delegates_to_base_history(monkeypatch):
