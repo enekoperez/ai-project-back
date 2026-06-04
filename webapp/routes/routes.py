@@ -3,10 +3,13 @@ from flask import jsonify
 from webapp.api.chat_api import chat
 from webapp.api.lang_api import lang
 from webapp.api.ocr_api import ocr
+from webapp.routes.error_handlers import init_error_handlers
 
 
 def init_routes(flask_app):
     flask_app.url_map.strict_slashes = False
+
+    init_error_handlers(flask_app)
 
     @flask_app.route("/", methods=["GET"])
     def health_check():
