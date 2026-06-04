@@ -114,3 +114,41 @@ def test_chat_football_reuses_existing_cache_without_loading_football_doc():
         tool_dispatch=None,
         cache_name="cache-1",
     )
+
+
+def test_chat_football_get_cache_returns_cache_create_time():
+    created_at = datetime(2026, 6, 1, 12, 0, 0)
+    service = ChatFootballService()
+    service.ai_service = Mock()
+    service.ai_service.google_get_cache.return_value = ("cache-1", created_at)
+
+    assert service.chat_football_get_cache(user_id="user-1") == {
+        "cache_create_time": "2026-06-01T12:00:00",
+        "cache_create_time_utc_in_millis": BaseService._to_millis(created_at),
+    }
+    service.ai_service.google_get_cache.assert_called_once_with(
+        display_name='{"user_id": "user-1", "key_2": "chat_football"}'
+    )
+
+
+def test_chat_football_refresh_cache_deletes_and_recreates_cache():
+    created_at = datetime(2026, 6, 1, 12, 0, 0)
+    service = ChatFootballService()
+    service.ai_service = Mock()
+    service.ai_service.google_set_cache.return_value = ("cache-1", created_at)
+    service.doc_service = Mock()
+    service.doc_service.get_source_files.return_value = []
+
+    with patch("webapp.services.chat_football_service.time.sleep") as sleep:
+        assert service.chat_football_refresh_cache(user_id="user-1") == {
+            "cache_create_time": "2026-06-01T12:00:00",
+            "cache_create_time_utc_in_millis": BaseService._to_millis(created_at),
+        }
+
+    display_name = '{"user_id": "user-1", "key_2": "chat_football"}'
+    service.ai_service.google_delete_cache.assert_called_once_with(display_name=display_name)
+    sleep.assert_called_once_with(15)
+    service.ai_service.google_set_cache.assert_called_once_with(
+        display_name=display_name,
+        system_instruction=build_system_prompt(football_data=""),
+    )
