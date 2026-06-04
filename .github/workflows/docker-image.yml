@@ -15,3 +15,8 @@ jobs:
 
       - name: Build Docker image
         run: docker build . --file Dockerfile --tag ai-project:test
+
+      - name: Smoke test Docker image imports
+        run: |
+          docker run --rm --env-file .env.example ai-project:test \
+            python -c "import webapp.run; print('Application imports successfully')"
