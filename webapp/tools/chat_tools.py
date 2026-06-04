@@ -4,6 +4,7 @@ import urllib.parse
 import urllib.request
 
 from google.genai import types
+from loguru import logger
 
 _GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search"
 _FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
@@ -40,7 +41,7 @@ class ChatTools:
         }
 
     def _get_weather(self, city: str) -> dict:
-        print(f">>> TOOL CALLED: get_weather city={city}")
+        logger.info("TOOL CALLED: get_weather city={}", city)
         city = city.strip()
         if not city:
             return {"error": "City is required", "city": city}

@@ -1,5 +1,7 @@
 import math
 
+from loguru import logger
+
 from webapp import config
 from webapp.repositories.rag_chunk_repository import RagChunkRepository
 from webapp.services.ai_service import AiService
@@ -73,7 +75,7 @@ class RagService:
                         model=model,
                     )
 
-        print("[rag.sync] end")
+        logger.info("[rag.sync] end")
         return True
 
     @staticmethod

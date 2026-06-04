@@ -3,6 +3,7 @@ import time
 from google import genai
 from google.genai import errors as genai_errors
 from google.genai import types
+from loguru import logger
 from mistralai.client import Mistral
 from mistralai.client.errors.sdkerror import SDKError
 from openai import OpenAI
@@ -83,7 +84,7 @@ class AiService:
                     duration_ms = int((time.time() - starting_time) * 1000)
                     return response, model, temperature, thoughts, tool_calls, duration_ms
                 except Exception as e:
-                    print(e)
+                    logger.exception("AI provider call failed")
                     if isinstance(e, UnsupportedGoogleMimeTypeError):  # Extension not supported by this provider — skip.
                         break
                     last_exc = e
