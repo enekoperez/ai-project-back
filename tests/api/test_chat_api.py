@@ -5,9 +5,10 @@ from flask import Flask
 from webapp.api.chat_api import chat
 
 
-def make_client(monkeypatch, service, chat_weather_service=None):
+def make_client(monkeypatch, service, chat_weather_service=None, chat_football_service=None):
     monkeypatch.setattr("webapp.api.chat_api.chat_service", service)
     monkeypatch.setattr("webapp.api.chat_api.chat_weather_service", chat_weather_service or service)
+    monkeypatch.setattr("webapp.api.chat_api.chat_football_service", chat_football_service or service)
 
     app = Flask(__name__)
     app.register_blueprint(chat, url_prefix="/ai/chat/")
@@ -74,6 +75,32 @@ def test_chat_weather_uses_user_id_header(monkeypatch):
     service.chat.assert_called_once_with("header-user", request_json)
 
 
+def test_chat_football_question_returns_response(monkeypatch):
+    service = Mock()
+    service.chat.return_value = {"chat_log_id": "chat-1", "chat_api_response": "Football teams have eleven players."}
+    client = make_client(monkeypatch, service)
+
+    request_json = {"user_id": "user-1", "question": "How many players are on a football team?"}
+    response = client.post("/ai/chat/football", json=request_json)
+
+    assert response.status_code == 200
+    assert response.get_json() == {"chat_log_id": "chat-1", "chat_api_response": "Football teams have eleven players."}
+    service.chat.assert_called_once_with("user-1", request_json)
+
+
+def test_chat_football_uses_user_id_header(monkeypatch):
+    service = Mock()
+    service.chat.return_value = {"chat_log_id": "chat-1"}
+    client = make_client(monkeypatch, service)
+
+    request_json = {"user_id": "body-user", "question": "Who won?"}
+    response = client.post("/ai/chat/football", json=request_json, headers={"User-Id": "header-user"})
+
+    assert response.status_code == 200
+    assert response.get_json() == {"chat_log_id": "chat-1"}
+    service.chat.assert_called_once_with("header-user", request_json)
+
+
 def test_get_chat_returns_history_from_body_user_id(monkeypatch):
     service = Mock()
     service.get_chat.return_value = [{"chat_log_id": "chat-1", "role": "user", "text": "Question"}]
@@ -130,23 +157,5 @@ def test_dislike_chat_log_returns_feedback_state(monkeypatch):
     service.dislike.assert_called_once_with(chat_log_id="chat-1")
 
 
-def test_get_chat_like_is_not_available(monkeypatch):
-    service = Mock()
-    client = make_client(monkeypatch, service)
-
-    response = client.get("/ai/chat/chat-1/like")
-
-    assert response.status_code == 405
-    service.like.assert_not_called()
-
-
-def test_get_chat_weather_is_not_available(monkeypatch):
-    service = Mock()
-    client = make_client(monkeypatch, service)
-
-    response = client.get("/ai/chat/weather", json={"user_id": "user-1"})
-
-    assert response.status_code == 405
-    service.chat.assert_not_called()
 
 

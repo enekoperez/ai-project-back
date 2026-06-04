@@ -61,6 +61,7 @@ def test_chat_creates_chat_row_and_calls_ai_service_with_question():
         history=[],
         tool_declarations=None,
         tool_dispatch=None,
+        cache_name=None,
     )
 
 

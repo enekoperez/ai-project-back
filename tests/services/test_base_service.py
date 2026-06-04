@@ -51,8 +51,8 @@ def test_call_llm_and_log_rejects_chat_and_rag_together():
 
     with pytest.raises(ValueError, match="Exactly one of is_chat or is_rag must be true."):
         service._call_llm_and_log(
-            chat_log_key={"user_id": "user-1"},
             user_question="question",
+            chat_log_key={"user_id": "user-1"},
             system_prompt="system",
             user_prompt="user",
             is_chat=True,
@@ -65,8 +65,8 @@ def test_call_llm_and_log_rejects_missing_chat_and_rag_mode():
 
     with pytest.raises(ValueError, match="Exactly one of is_chat or is_rag must be true."):
         service._call_llm_and_log(
-            chat_log_key={"user_id": "user-1"},
             user_question="question",
+            chat_log_key={"user_id": "user-1"},
             system_prompt="system",
             user_prompt="user",
             is_chat=False,

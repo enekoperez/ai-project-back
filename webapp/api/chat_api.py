@@ -1,9 +1,11 @@
 from flask import Blueprint, jsonify, request
 
+from webapp.services.chat_football_service import ChatFootballService
 from webapp.services.chat_service import ChatService
 from webapp.services.chat_weather_service import ChatWeatherService
 
 chat = Blueprint("chat", __name__)
+chat_football_service = ChatFootballService()
 chat_service = ChatService()
 chat_weather_service = ChatWeatherService()
 
@@ -31,6 +33,13 @@ def get_chat():
 def create_chat_weather():
     user_id = _request_user_id()
     response = chat_weather_service.chat(user_id, request.json)
+    return jsonify(response), 200
+
+
+@chat.route("football", methods=["POST"])
+def create_chat_football():
+    user_id = _request_user_id()
+    response = chat_football_service.chat(user_id, request.json)
     return jsonify(response), 200
 
 

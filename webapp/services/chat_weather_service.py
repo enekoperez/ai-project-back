@@ -4,9 +4,6 @@ from webapp.tools.chat_weather_tools import ChatWeatherTools
 
 
 class ChatWeatherService(BaseService):
-    def __init__(self):
-        pass
-
     def chat(self, user_id, request_json):
         question = self._normalize_user_input(_input=request_json["question"])
 
@@ -14,8 +11,8 @@ class ChatWeatherService(BaseService):
         chat_weather_tools = ChatWeatherTools()
 
         chat_log, chat_api_response = self._call_llm_and_log(
-            chat_log_key=chat_log_key,
             user_question=question,
+            chat_log_key=chat_log_key,
             system_prompt=build_system_prompt(),
             user_prompt=build_user_prompt(question=question),
             is_chat=True,

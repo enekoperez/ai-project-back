@@ -58,5 +58,6 @@ def test_chat_weather_uses_tools_without_rag_and_separate_history():
         history=[],
         tool_declarations=ChatWeatherTools().declarations(),
         tool_dispatch=service.ai_service.call_llm.call_args.kwargs["tool_dispatch"],
+        cache_name=None,
     )
     assert set(ai_service.call_llm.call_args.kwargs["tool_dispatch"]) == {"get_weather"}
