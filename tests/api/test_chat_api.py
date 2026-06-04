@@ -5,8 +5,9 @@ from flask import Flask
 from webapp.api.chat_api import chat
 
 
-def make_client(monkeypatch, service):
+def make_client(monkeypatch, service, chat_weather_service=None):
     monkeypatch.setattr("webapp.api.chat_api.chat_service", service)
+    monkeypatch.setattr("webapp.api.chat_api.chat_weather_service", chat_weather_service or service)
 
     app = Flask(__name__)
     app.register_blueprint(chat, url_prefix="/ai/chat/")
@@ -47,9 +48,9 @@ def test_answer_chat_question_uses_user_id_header(monkeypatch):
     service.chat.assert_called_once_with("header-user", request_json)
 
 
-def test_weather_chat_question_returns_response(monkeypatch):
+def test_chat_weather_question_returns_response(monkeypatch):
     service = Mock()
-    service.weather.return_value = {"chat_log_id": "chat-1", "chat_api_response": "Bad weather in Bilbao."}
+    service.chat.return_value = {"chat_log_id": "chat-1", "chat_api_response": "Bad weather in Bilbao."}
     client = make_client(monkeypatch, service)
 
     request_json = {"user_id": "user-1", "question": "What's the weather in Bilbao?"}
@@ -57,12 +58,12 @@ def test_weather_chat_question_returns_response(monkeypatch):
 
     assert response.status_code == 200
     assert response.get_json() == {"chat_log_id": "chat-1", "chat_api_response": "Bad weather in Bilbao."}
-    service.weather.assert_called_once_with("user-1", request_json)
+    service.chat.assert_called_once_with("user-1", request_json)
 
 
-def test_weather_chat_uses_user_id_header(monkeypatch):
+def test_chat_weather_uses_user_id_header(monkeypatch):
     service = Mock()
-    service.weather.return_value = {"chat_log_id": "chat-1"}
+    service.chat.return_value = {"chat_log_id": "chat-1"}
     client = make_client(monkeypatch, service)
 
     request_json = {"user_id": "body-user", "question": "What's the weather in Oviedo?"}
@@ -70,7 +71,7 @@ def test_weather_chat_uses_user_id_header(monkeypatch):
 
     assert response.status_code == 200
     assert response.get_json() == {"chat_log_id": "chat-1"}
-    service.weather.assert_called_once_with("header-user", request_json)
+    service.chat.assert_called_once_with("header-user", request_json)
 
 
 def test_get_chat_returns_history_from_body_user_id(monkeypatch):
@@ -139,11 +140,13 @@ def test_get_chat_like_is_not_available(monkeypatch):
     service.like.assert_not_called()
 
 
-def test_get_weather_chat_is_not_available(monkeypatch):
+def test_get_chat_weather_is_not_available(monkeypatch):
     service = Mock()
     client = make_client(monkeypatch, service)
 
     response = client.get("/ai/chat/weather", json={"user_id": "user-1"})
 
     assert response.status_code == 405
-    service.weather.assert_not_called()
+    service.chat.assert_not_called()
+
+

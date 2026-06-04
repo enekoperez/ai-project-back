@@ -1,7 +1,7 @@
 import json
 import urllib.error
 
-from webapp.tools.chat_tools import ChatTools
+from webapp.tools.chat_weather_tools import ChatWeatherTools
 
 
 class FakeWeatherResponse:
@@ -18,7 +18,7 @@ class FakeWeatherResponse:
         return json.dumps(self.payload).encode("utf-8")
 
 
-def test_weather_tool_returns_open_meteo_current_weather(monkeypatch):
+def test_chat_weather_tool_returns_open_meteo_current_weather(monkeypatch):
     responses = [
         {
             "results": [
@@ -52,8 +52,8 @@ def test_weather_tool_returns_open_meteo_current_weather(monkeypatch):
         requested_urls.append(req.full_url)
         return FakeWeatherResponse(responses.pop(0))
 
-    monkeypatch.setattr("webapp.tools.chat_tools.urllib.request.urlopen", urlopen)
-    tools = ChatTools()
+    monkeypatch.setattr("webapp.tools.chat_weather_tools.urllib.request.urlopen", urlopen)
+    tools = ChatWeatherTools()
 
     assert tools.dispatch()["get_weather"](city="Oviedo") == {
         "city": "Oviedo",
@@ -77,33 +77,33 @@ def test_weather_tool_returns_open_meteo_current_weather(monkeypatch):
     assert requested_urls[1].startswith("https://api.open-meteo.com/v1/forecast?")
 
 
-def test_weather_tool_returns_error_when_city_not_found(monkeypatch):
+def test_chat_weather_tool_returns_error_when_city_not_found(monkeypatch):
     requested_urls = []
 
     def urlopen(req, timeout):
         requested_urls.append(req.full_url)
         return FakeWeatherResponse({})
 
-    monkeypatch.setattr("webapp.tools.chat_tools.urllib.request.urlopen", urlopen)
-    tools = ChatTools()
+    monkeypatch.setattr("webapp.tools.chat_weather_tools.urllib.request.urlopen", urlopen)
+    tools = ChatWeatherTools()
 
     assert tools.dispatch()["get_weather"](city="Unknown City") == {"error": "City not found", "city": "Unknown City"}
     assert len(requested_urls) == 1
     assert requested_urls[0].startswith("https://geocoding-api.open-meteo.com/v1/search?")
 
 
-def test_weather_tool_returns_error_when_city_is_blank():
-    tools = ChatTools()
+def test_chat_weather_tool_returns_error_when_city_is_blank():
+    tools = ChatWeatherTools()
 
     assert tools.dispatch()["get_weather"](city="   ") == {"error": "City is required", "city": ""}
 
 
-def test_weather_tool_returns_error_when_api_fails(monkeypatch):
+def test_chat_weather_tool_returns_error_when_api_fails(monkeypatch):
     def urlopen(req, timeout):
         raise urllib.error.URLError("network down")
 
-    monkeypatch.setattr("webapp.tools.chat_tools.urllib.request.urlopen", urlopen)
-    tools = ChatTools()
+    monkeypatch.setattr("webapp.tools.chat_weather_tools.urllib.request.urlopen", urlopen)
+    tools = ChatWeatherTools()
 
     response = tools.dispatch()["get_weather"](city="Bilbao")
 

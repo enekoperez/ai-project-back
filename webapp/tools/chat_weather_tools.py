@@ -11,7 +11,7 @@ _FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
 _REQUEST_TIMEOUT_SECONDS = 15
 
 
-class ChatTools:
+class ChatWeatherTools:
     def __init__(self):
         # self.headers = dict(request_headers)
         # self.user_id = user_id

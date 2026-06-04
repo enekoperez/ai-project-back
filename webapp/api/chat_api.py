@@ -1,9 +1,11 @@
 from flask import Blueprint, jsonify, request
 
 from webapp.services.chat_service import ChatService
+from webapp.services.chat_weather_service import ChatWeatherService
 
 chat = Blueprint("chat", __name__)
 chat_service = ChatService()
+chat_weather_service = ChatWeatherService()
 
 
 def _request_user_id():
@@ -26,9 +28,9 @@ def get_chat():
 
 
 @chat.route("weather", methods=["POST"])
-def create_weather_chat():
+def create_chat_weather():
     user_id = _request_user_id()
-    response = chat_service.weather(user_id, request.json)
+    response = chat_weather_service.chat(user_id, request.json)
     return jsonify(response), 200
 
 

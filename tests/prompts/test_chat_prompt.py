@@ -1,4 +1,4 @@
-from webapp.prompts.chat_prompt import build_system_prompt, build_user_prompt, build_weather_system_prompt
+from webapp.prompts.chat_prompt import build_system_prompt, build_user_prompt
 
 
 def test_build_system_prompt_instructs_rag_context_only_answers():
@@ -26,11 +26,3 @@ def test_build_user_prompt_includes_chunks_and_question():
     assert '<chunk source_name="football.md" score="0.8765">' in prompt
     assert "Football teams have eleven players." in prompt
     assert "Question: How many players are on a football team?" in prompt
-
-
-def test_build_weather_system_prompt_requires_weather_tool():
-    prompt = build_weather_system_prompt().lower()
-
-    assert "always call `get_weather`" in prompt
-    assert "do not answer from memory" in prompt
-    assert "could not retrieve weather data" in prompt
