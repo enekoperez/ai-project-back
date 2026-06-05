@@ -4,18 +4,21 @@ from flask import Flask
 
 from webapp.api.chat_api import chat
 from webapp.api.chat_football_api import chat_football
+from webapp.api.chat_general_api import chat_general
 from webapp.api.chat_weather_api import chat_weather
 from webapp.routes.error_handlers import init_error_handlers
 
 
-def make_client(monkeypatch, service, chat_weather_service=None, chat_football_service=None):
+def make_client(monkeypatch, service, chat_general_service=None, chat_weather_service=None, chat_football_service=None):
     monkeypatch.setattr("webapp.api.chat_api.chat_service", service)
+    monkeypatch.setattr("webapp.api.chat_general_api.chat_general_service", chat_general_service or service)
     monkeypatch.setattr("webapp.api.chat_weather_api.chat_weather_service", chat_weather_service or service)
     monkeypatch.setattr("webapp.api.chat_football_api.chat_football_service", chat_football_service or service)
 
     app = Flask(__name__)
     init_error_handlers(app)
     app.register_blueprint(chat, url_prefix="/ai/chat/")
+    app.register_blueprint(chat_general, url_prefix="/ai/chat/general/")
     app.register_blueprint(chat_football, url_prefix="/ai/chat/football/")
     app.register_blueprint(chat_weather, url_prefix="/ai/chat/weather/")
     return app.test_client()
@@ -31,7 +34,7 @@ def test_answer_chat_question_returns_response(monkeypatch):
     client = make_client(monkeypatch, service)
 
     request_json = {"user_id": "user-1", "question": "How do I extract invoice totals?"}
-    response = client.post("/ai/chat/", json=request_json)
+    response = client.post("/ai/chat/general/", json=request_json)
 
     assert response.status_code == 200
     assert response.get_json() == {
@@ -48,7 +51,7 @@ def test_answer_chat_question_uses_user_id_header(monkeypatch):
     client = make_client(monkeypatch, service)
 
     request_json = {"user_id": "body-user", "question": "How do I extract invoice totals?"}
-    response = client.post("/ai/chat/", json=request_json, headers={"User-Id": "header-user"})
+    response = client.post("/ai/chat/general/", json=request_json, headers={"User-Id": "header-user"})
 
     assert response.status_code == 200
     assert response.get_json() == {"chat_log_id": "chat-1"}
@@ -59,7 +62,7 @@ def test_answer_chat_question_returns_422_without_question(monkeypatch):
     service = Mock()
     client = make_client(monkeypatch, service)
 
-    response = client.post("/ai/chat/", json={"user_id": "user-1"})
+    response = client.post("/ai/chat/general/", json={"user_id": "user-1"})
 
     assert response.status_code == 422
     assert response.get_json()["error"]["code"] == "validation_error"
@@ -70,7 +73,7 @@ def test_answer_chat_question_returns_422_without_user_id(monkeypatch):
     service = Mock()
     client = make_client(monkeypatch, service)
 
-    response = client.post("/ai/chat/", json={"question": "How do I extract invoice totals?"})
+    response = client.post("/ai/chat/general/", json={"question": "How do I extract invoice totals?"})
 
     assert response.status_code == 422
     assert response.get_json()["error"]["code"] == "validation_error"
@@ -328,7 +331,7 @@ def test_get_chat_returns_history_from_body_user_id(monkeypatch):
     service.get_chat.return_value = [{"chat_log_id": "chat-1", "role": "user", "text": "Question"}]
     client = make_client(monkeypatch, service)
 
-    response = client.get("/ai/chat/", json={"user_id": "user-1"})
+    response = client.get("/ai/chat/general/", json={"user_id": "user-1"})
 
     assert response.status_code == 200
     assert response.get_json() == [{"chat_log_id": "chat-1", "role": "user", "text": "Question"}]
@@ -340,7 +343,7 @@ def test_get_chat_uses_user_id_header(monkeypatch):
     service.get_chat.return_value = []
     client = make_client(monkeypatch, service)
 
-    response = client.get("/ai/chat/", json={"user_id": "body-user"}, headers={"User-Id": "header-user"})
+    response = client.get("/ai/chat/general/", json={"user_id": "body-user"}, headers={"User-Id": "header-user"})
 
     assert response.status_code == 200
     assert response.get_json() == []
@@ -351,7 +354,7 @@ def test_get_chat_returns_422_without_user_id(monkeypatch):
     service = Mock()
     client = make_client(monkeypatch, service)
 
-    response = client.get("/ai/chat/")
+    response = client.get("/ai/chat/general/")
 
     assert response.status_code == 422
     assert response.get_json()["error"]["code"] == "validation_error"

@@ -1,0 +1,103 @@
+from datetime import datetime, timezone
+from unittest.mock import Mock
+
+from webapp.prompts.chat_prompt import build_system_prompt, build_user_prompt
+from webapp.services.base_service import BaseService
+from webapp.services.chat_general_service import ChatGeneralService
+
+
+def test_chat_general_service_inherits_base_service():
+    assert isinstance(ChatGeneralService(), BaseService)
+
+
+def test_chat_creates_chat_row_and_calls_ai_service_with_question():
+    ai_service = Mock()
+    ai_service.call_llm.return_value = (
+        "Use the OCR endpoint for invoice files.",
+        "model",
+        1.0,
+        None,
+        [],
+        100,
+    )
+    chat_log_repository = Mock()
+    created_at = datetime(2026, 6, 1, 12, 0, 0, tzinfo=timezone.utc)
+    chat_log_repository.create.return_value = Mock(id="chat-1", created_at=created_at)
+    service = ChatGeneralService()
+    service.ai_service = ai_service
+    service.chat_log_repository = chat_log_repository
+    service.rag_service = Mock()
+    chat_log_repository.get_history.return_value = []
+    service.rag_service.get_top_chunks.return_value = [
+        {"source_name": "ocr.md", "score": 0.9, "text": "Use the OCR endpoint for invoice files."}
+    ]
+
+    response = service.chat(user_id="user-1", request_json={"question": "  How do I extract invoice totals?  "})
+
+    assert response == {
+        "chat_log_id": "chat-1",
+        "chat_api_response": "Use the OCR endpoint for invoice files.",
+        "date": "2026-06-01T12:00:00+00:00",
+        "date_utc_in_millis": BaseService._to_millis(created_at),
+        "cache_create_time": None,
+        "cache_create_time_utc_in_millis": None,
+        "source_names_and_scores": [{"source_name": "ocr.md", "score": 0.9}],
+    }
+    chat_log_repository.create.assert_called_once_with(
+        key={"user_id": "user-1"},
+        user_question="How do I extract invoice totals?",
+        chat_api_response="Use the OCR endpoint for invoice files.",
+    )
+    service.rag_service.get_top_chunks.assert_called_once_with(question="How do I extract invoice totals?")
+    ai_service.call_llm.assert_called_once_with(
+        system_prompt=build_system_prompt(),
+        user_prompt=build_user_prompt(
+            chunks=[{"source_name": "ocr.md", "score": 0.9, "text": "Use the OCR endpoint for invoice files."}],
+            question="How do I extract invoice totals?",
+        ),
+        max_output_tokens=6666,
+        is_chat=False,
+        is_rag=True,
+        history=[],
+        tool_declarations=None,
+        tool_dispatch=None,
+        cache_name=None,
+    )
+
+
+def test_chat_allows_missing_created_at():
+    ai_service = Mock()
+    ai_service.call_llm.return_value = ("Answer text", "model", 1.0, None, [], 100)
+    chat_log_repository = Mock()
+    chat_log_repository.create.return_value = Mock(id="chat-1", created_at=None)
+    service = ChatGeneralService()
+    service.ai_service = ai_service
+    service.chat_log_repository = chat_log_repository
+    service.rag_service = Mock()
+    service.rag_service.get_top_chunks.return_value = []
+
+    response = service.chat(user_id="user-1", request_json={"question": "What can this app do?"})
+
+    assert response == {
+        "chat_log_id": "chat-1",
+        "chat_api_response": "Answer text",
+        "date": None,
+        "date_utc_in_millis": None,
+        "cache_create_time": None,
+        "cache_create_time_utc_in_millis": None,
+        "source_names_and_scores": [],
+    }
+    chat_log_repository.create.assert_called_once_with(
+        key={"user_id": "user-1"},
+        user_question="What can this app do?",
+        chat_api_response="Answer text",
+    )
+
+
+def test_get_chat_delegates_to_base_history(monkeypatch):
+    service = ChatGeneralService()
+    history = [{"chat_log_id": "chat-1", "role": "user", "text": "Question"}]
+    monkeypatch.setattr(service, "get_chat_history", Mock(return_value=history))
+
+    assert service.get_chat(user_id="user-1") == history
+    service.get_chat_history.assert_called_once_with(user_id="user-1")
