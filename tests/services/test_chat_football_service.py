@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import Mock, patch
 
 from webapp.prompts.chat_football_prompt import build_system_prompt, build_user_prompt
@@ -22,7 +22,7 @@ def test_chat_football_uses_chat_without_tools_and_separate_history():
     )
     ai_service.google_get_cache.return_value = (None, None)
     chat_log_repository = Mock()
-    created_at = datetime(2026, 6, 1, 12, 0, 0)
+    created_at = datetime(2026, 6, 1, 12, 0, 0, tzinfo=timezone.utc)
     ai_service.google_set_cache.return_value = ("cache-1", created_at)
     chat_log_repository.create.return_value = Mock(id="chat-1", created_at=created_at)
     chat_log_repository.get_history.return_value = []
@@ -47,9 +47,9 @@ def test_chat_football_uses_chat_without_tools_and_separate_history():
     assert response == {
         "chat_log_id": "chat-1",
         "chat_api_response": "Football teams have eleven players.",
-        "date": "2026-06-01T12:00:00",
+        "date": "2026-06-01T12:00:00+00:00",
         "date_utc_in_millis": BaseService._to_millis(created_at),
-        "cache_create_time": "2026-06-01T12:00:00",
+        "cache_create_time": "2026-06-01T12:00:00+00:00",
         "cache_create_time_utc_in_millis": BaseService._to_millis(created_at),
         "source_names_and_scores": [],
     }
@@ -87,7 +87,7 @@ def test_chat_football_uses_chat_without_tools_and_separate_history():
 
 def test_chat_football_reuses_existing_cache_without_loading_football_doc():
     ai_service = Mock()
-    ai_service.google_get_cache.return_value = ("cache-1", datetime(2026, 6, 1, 12, 0, 0))
+    ai_service.google_get_cache.return_value = ("cache-1", datetime(2026, 6, 1, 12, 0, 0, tzinfo=timezone.utc))
     ai_service.call_llm.return_value = ("Cached answer", "model", 1.0, None, [], 100)
     chat_log_repository = Mock()
     chat_log_repository.create.return_value = Mock(id="chat-1", created_at=None)
@@ -117,13 +117,13 @@ def test_chat_football_reuses_existing_cache_without_loading_football_doc():
 
 
 def test_chat_football_get_cache_returns_cache_create_time():
-    created_at = datetime(2026, 6, 1, 12, 0, 0)
+    created_at = datetime(2026, 6, 1, 12, 0, 0, tzinfo=timezone.utc)
     service = ChatFootballService()
     service.ai_service = Mock()
     service.ai_service.google_get_cache.return_value = ("cache-1", created_at)
 
     assert service.chat_football_get_cache(user_id="user-1") == {
-        "cache_create_time": "2026-06-01T12:00:00",
+        "cache_create_time": "2026-06-01T12:00:00+00:00",
         "cache_create_time_utc_in_millis": BaseService._to_millis(created_at),
     }
     service.ai_service.google_get_cache.assert_called_once_with(
@@ -132,7 +132,7 @@ def test_chat_football_get_cache_returns_cache_create_time():
 
 
 def test_chat_football_refresh_cache_deletes_and_recreates_cache():
-    created_at = datetime(2026, 6, 1, 12, 0, 0)
+    created_at = datetime(2026, 6, 1, 12, 0, 0, tzinfo=timezone.utc)
     service = ChatFootballService()
     service.ai_service = Mock()
     service.ai_service.google_set_cache.return_value = ("cache-1", created_at)
@@ -141,7 +141,7 @@ def test_chat_football_refresh_cache_deletes_and_recreates_cache():
 
     with patch("webapp.services.chat_football_service.time.sleep") as sleep:
         assert service.chat_football_refresh_cache(user_id="user-1") == {
-            "cache_create_time": "2026-06-01T12:00:00",
+            "cache_create_time": "2026-06-01T12:00:00+00:00",
             "cache_create_time_utc_in_millis": BaseService._to_millis(created_at),
         }
 

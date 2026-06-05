@@ -1,5 +1,5 @@
 import pytest
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import Mock
 
 from webapp.services.base_service import BaseService
@@ -75,7 +75,7 @@ def test_call_llm_and_log_rejects_missing_chat_and_rag_mode():
 
 
 def test_get_chat_history_formats_dates_and_model_json():
-    created_at = datetime(2026, 6, 1, 12, 0, 0)
+    created_at = datetime(2026, 6, 1, 12, 0, 0, tzinfo=timezone.utc)
     repository = Mock()
     repository.get_history.return_value = [
         {"chat_log_id": "chat-1", "role": "user", "text": "Question", "created_at": created_at},
@@ -89,14 +89,14 @@ def test_get_chat_history_formats_dates_and_model_json():
             "chat_log_id": "chat-1",
             "role": "user",
             "text": "Question",
-            "created_at": "2026-06-01T12:00:00",
+            "created_at": "2026-06-01T12:00:00+00:00",
             "created_at_utc_in_millis": BaseService._to_millis(created_at),
         },
         {
             "chat_log_id": "chat-1",
             "role": "model",
             "text": {"answer": "Answer"},
-            "created_at": "2026-06-01T12:00:00",
+            "created_at": "2026-06-01T12:00:00+00:00",
             "created_at_utc_in_millis": BaseService._to_millis(created_at),
         },
     ]

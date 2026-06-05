@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import Mock
 
 from webapp.prompts.chat_weather_prompt import build_system_prompt, build_user_prompt
@@ -22,7 +22,7 @@ def test_chat_weather_uses_tools_without_rag_and_separate_history():
         100,
     )
     chat_log_repository = Mock()
-    created_at = datetime(2026, 6, 1, 12, 0, 0)
+    created_at = datetime(2026, 6, 1, 12, 0, 0, tzinfo=timezone.utc)
     chat_log_repository.create.return_value = Mock(id="chat-1", created_at=created_at)
     chat_log_repository.get_history.return_value = []
     service = ChatWeatherService()
@@ -37,7 +37,7 @@ def test_chat_weather_uses_tools_without_rag_and_separate_history():
     assert response == {
         "chat_log_id": "chat-1",
         "chat_api_response": "The weather in Bilbao is bad.",
-        "date": "2026-06-01T12:00:00",
+        "date": "2026-06-01T12:00:00+00:00",
         "date_utc_in_millis": BaseService._to_millis(created_at),
         "cache_create_time": None,
         "cache_create_time_utc_in_millis": None,

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import Mock
 
 from webapp.prompts.ocr_prompt import build_system_prompt
@@ -21,7 +21,7 @@ def test_ask_creates_ocr_row_and_calls_ai_service_with_file_and_questions():
         100,
     )
     ocr_log_repository = Mock()
-    ocr_log_repository.create.return_value = Mock(id="ocr-1", created_at=datetime(2026, 6, 1, 12, 0, 0))
+    ocr_log_repository.create.return_value = Mock(id="ocr-1", created_at=datetime(2026, 6, 1, 12, 0, 0, tzinfo=timezone.utc))
     service = OcrService()
     service.ai_service = ai_service
     service.ocr_log_repository = ocr_log_repository
@@ -37,7 +37,7 @@ def test_ask_creates_ocr_row_and_calls_ai_service_with_file_and_questions():
             "What is the total?": ["120.00"],
             "What is the invoice number?": ["INV-1"],
         },
-        "created_at": "2026-06-01T12:00:00",
+        "created_at": "2026-06-01T12:00:00+00:00",
     }
     ocr_log_repository.create.assert_called_once_with()
     ai_service.call_llm.assert_called_once_with(

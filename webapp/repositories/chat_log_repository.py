@@ -1,6 +1,7 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from webapp.models.chat_log_domain import ChatLog
+from webapp.datetime_utils import utc_now
 
 
 class ChatLogRepository:
@@ -35,7 +36,7 @@ class ChatLogRepository:
         return {"chat_log_id": chat_log_id, "liked": None, "disliked": True}
 
     def get_history(self, key, max_history_minutes=60, max_history_turns=10) -> list:
-        cutoff = datetime.utcnow() - timedelta(minutes=max_history_minutes)
+        cutoff = utc_now() - timedelta(minutes=max_history_minutes)
         logs = (
             ChatLog.objects(key=key, created_at__gte=cutoff, expired__ne=True)
             .order_by('-created_at')

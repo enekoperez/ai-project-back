@@ -1,10 +1,10 @@
-from datetime import datetime
-
 from mongoengine import BooleanField, DateTimeField, DictField, Document, StringField
+
+from webapp.datetime_utils import utc_now
 
 
 class ChatLog(Document):
-    created_at = DateTimeField(default=datetime.utcnow)
+    created_at = DateTimeField(default=utc_now)
 
     key = DictField()
     user_question = StringField()

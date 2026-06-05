@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import Mock
 
 from webapp.prompts.chat_prompt import build_system_prompt, build_user_prompt
@@ -21,7 +21,7 @@ def test_chat_creates_chat_row_and_calls_ai_service_with_question():
         100,
     )
     chat_log_repository = Mock()
-    created_at = datetime(2026, 6, 1, 12, 0, 0)
+    created_at = datetime(2026, 6, 1, 12, 0, 0, tzinfo=timezone.utc)
     chat_log_repository.create.return_value = Mock(id="chat-1", created_at=created_at)
     service = ChatService()
     service.ai_service = ai_service
@@ -37,7 +37,7 @@ def test_chat_creates_chat_row_and_calls_ai_service_with_question():
     assert response == {
         "chat_log_id": "chat-1",
         "chat_api_response": "Use the OCR endpoint for invoice files.",
-        "date": "2026-06-01T12:00:00",
+        "date": "2026-06-01T12:00:00+00:00",
         "date_utc_in_millis": BaseService._to_millis(created_at),
         "cache_create_time": None,
         "cache_create_time_utc_in_millis": None,
