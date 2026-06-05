@@ -3,12 +3,14 @@ from unittest.mock import Mock
 from flask import Flask
 
 from webapp.api.ocr_api import ocr
+from webapp.routes.error_handlers import init_error_handlers
 
 
 def make_client(monkeypatch, service):
     monkeypatch.setattr("webapp.api.ocr_api.ocr_service", service)
 
     app = Flask(__name__)
+    init_error_handlers(app)
     app.register_blueprint(ocr, url_prefix="/ai/ocr/")
     return app.test_client()
 
@@ -35,6 +37,39 @@ def test_answer_ocr_questions_returns_response(monkeypatch):
         "created_at": "2026-06-01T12:00:00",
     }
     service.ask.assert_called_once_with(request_json)
+
+
+def test_answer_ocr_questions_returns_422_without_file_url(monkeypatch):
+    service = Mock()
+    client = make_client(monkeypatch, service)
+
+    response = client.post("/ai/ocr/", json={"questions": ["What is the total?"]})
+
+    assert response.status_code == 422
+    assert response.get_json()["error"]["code"] == "validation_error"
+    service.ask.assert_not_called()
+
+
+def test_answer_ocr_questions_returns_422_with_empty_questions(monkeypatch):
+    service = Mock()
+    client = make_client(monkeypatch, service)
+
+    response = client.post("/ai/ocr/", json={"file_url": "https://example.com/invoice.pdf", "questions": []})
+
+    assert response.status_code == 422
+    assert response.get_json()["error"]["code"] == "validation_error"
+    service.ask.assert_not_called()
+
+
+def test_answer_ocr_questions_returns_422_with_blank_question(monkeypatch):
+    service = Mock()
+    client = make_client(monkeypatch, service)
+
+    response = client.post("/ai/ocr/", json={"file_url": "https://example.com/invoice.pdf", "questions": [" "]})
+
+    assert response.status_code == 422
+    assert response.get_json()["error"]["code"] == "validation_error"
+    service.ask.assert_not_called()
 
 
 def test_get_ocr_is_not_available(monkeypatch):
