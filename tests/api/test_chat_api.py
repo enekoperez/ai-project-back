@@ -4,6 +4,7 @@ from flask import Flask
 
 from webapp.api.chat_api import chat
 from webapp.routes.error_handlers import init_error_handlers
+from response_assertions import assert_error_code, assert_success_response
 
 
 def make_client(monkeypatch, service):
@@ -20,14 +21,14 @@ def test_like_chat_log_returns_feedback_state(monkeypatch):
     service.like.return_value = {"chat_log_id": "chat-1", "liked": True, "disliked": None}
     client = make_client(monkeypatch, service)
 
-    response = client.post("/ai/chat/chat-1/like")
+    response = client.put("/ai/chat/chat-1/like")
 
     assert response.status_code == 200
-    assert response.get_json() == {
+    assert_success_response(response, {
         "chat_log_id": "chat-1",
         "liked": True,
         "disliked": None,
-    }
+    })
     service.like.assert_called_once_with(chat_log_id="chat-1")
 
 
@@ -35,10 +36,10 @@ def test_like_chat_log_returns_422_for_blank_path_id(monkeypatch):
     service = Mock()
     client = make_client(monkeypatch, service)
 
-    response = client.post("/ai/chat/%20/like")
+    response = client.put("/ai/chat/%20/like")
 
     assert response.status_code == 422
-    assert response.get_json()["error"]["code"] == "validation_error"
+    assert_error_code(response, "validation_error")
     service.like.assert_not_called()
 
 
@@ -47,12 +48,12 @@ def test_dislike_chat_log_returns_feedback_state(monkeypatch):
     service.dislike.return_value = {"chat_log_id": "chat-1", "liked": None, "disliked": True}
     client = make_client(monkeypatch, service)
 
-    response = client.post("/ai/chat/chat-1/dislike")
+    response = client.put("/ai/chat/chat-1/dislike")
 
     assert response.status_code == 200
-    assert response.get_json() == {
+    assert_success_response(response, {
         "chat_log_id": "chat-1",
         "liked": None,
         "disliked": True,
-    }
+    })
     service.dislike.assert_called_once_with(chat_log_id="chat-1")

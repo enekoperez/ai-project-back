@@ -1,5 +1,6 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint
 
+from webapp.api.responses import success
 from webapp.api.validation import LangSimpleRequest, validate_json
 from webapp.services.lang_service import LangService
 
@@ -11,10 +12,10 @@ lang_service = LangService()
 def call_simple():
     request_json = validate_json(LangSimpleRequest)
     response = lang_service.call_simple(request_json)
-    return jsonify(response), 200
+    return success(response)
 
 
 @lang.route("complex", methods=["POST"])
 def call_complex():
     response = lang_service.call_complex()
-    return jsonify(response), 200
+    return success(response)

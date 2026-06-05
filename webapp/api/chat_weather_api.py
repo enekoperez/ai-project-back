@@ -1,5 +1,6 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint
 
+from webapp.api.responses import success
 from webapp.api.validation import ChatRequest, validate_json, validate_user_id
 from webapp.services.chat_weather_service import ChatWeatherService
 
@@ -12,11 +13,11 @@ def create_chat():
     user_id = validate_user_id()
     request_json = validate_json(ChatRequest)
     response = chat_weather_service.chat(user_id, request_json)
-    return jsonify(response), 200
+    return success(response, status=201)
 
 
 @chat_weather.route("", methods=["GET"])
 def get_chat():
     user_id = validate_user_id()
     response = chat_weather_service.get_chat(user_id=user_id)
-    return jsonify(response), 200
+    return success(response)

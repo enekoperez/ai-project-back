@@ -4,6 +4,7 @@ from flask import Flask
 
 from webapp.api.ocr_api import ocr
 from webapp.routes.error_handlers import init_error_handlers
+from response_assertions import assert_error_code, assert_success_response
 
 
 def make_client(monkeypatch, service):
@@ -30,12 +31,12 @@ def test_answer_ocr_questions_returns_response(monkeypatch):
     }
     response = client.post("/ai/ocr/", json=request_json)
 
-    assert response.status_code == 200
-    assert response.get_json() == {
+    assert response.status_code == 201
+    assert_success_response(response, {
         "id": "ocr-1",
         "response": "The invoice total is 120.00.",
         "created_at": "2026-06-01T12:00:00",
-    }
+    })
     service.ask.assert_called_once_with(request_json)
 
 
@@ -46,7 +47,7 @@ def test_answer_ocr_questions_returns_422_without_file_url(monkeypatch):
     response = client.post("/ai/ocr/", json={"questions": ["What is the total?"]})
 
     assert response.status_code == 422
-    assert response.get_json()["error"]["code"] == "validation_error"
+    assert_error_code(response, "validation_error")
     service.ask.assert_not_called()
 
 
@@ -57,7 +58,7 @@ def test_answer_ocr_questions_returns_422_with_empty_questions(monkeypatch):
     response = client.post("/ai/ocr/", json={"file_url": "https://example.com/invoice.pdf", "questions": []})
 
     assert response.status_code == 422
-    assert response.get_json()["error"]["code"] == "validation_error"
+    assert_error_code(response, "validation_error")
     service.ask.assert_not_called()
 
 
@@ -68,7 +69,7 @@ def test_answer_ocr_questions_returns_422_with_blank_question(monkeypatch):
     response = client.post("/ai/ocr/", json={"file_url": "https://example.com/invoice.pdf", "questions": [" "]})
 
     assert response.status_code == 422
-    assert response.get_json()["error"]["code"] == "validation_error"
+    assert_error_code(response, "validation_error")
     service.ask.assert_not_called()
 
 
@@ -79,4 +80,5 @@ def test_get_ocr_is_not_available(monkeypatch):
     response = client.get("/ai/ocr/")
 
     assert response.status_code == 405
+    assert_error_code(response, "method_not_allowed")
     service.ask.assert_not_called()

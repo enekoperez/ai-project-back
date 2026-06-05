@@ -1,5 +1,6 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint
 
+from webapp.api.responses import success
 from webapp.api.validation import OcrRequest, validate_json
 from webapp.services.ocr_service import OcrService
 
@@ -11,4 +12,4 @@ ocr_service = OcrService()
 def ask():
     request_json = validate_json(OcrRequest)
     response = ocr_service.ask(request_json)
-    return jsonify(response), 200
+    return success(response, status=201)

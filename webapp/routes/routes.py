@@ -1,5 +1,4 @@
-from flask import jsonify
-
+from webapp.api.responses import success
 from webapp.api.chat_api import chat
 from webapp.api.chat_football_api import chat_football
 from webapp.api.chat_general_api import chat_general
@@ -16,7 +15,7 @@ def init_routes(flask_app):
 
     @flask_app.route("/", methods=["GET"])
     def health_check():
-        return jsonify({"status": "OK"}), 200
+        return success({"status": "OK"})
 
     flask_app.register_blueprint(chat, url_prefix="/ai/chat/")
     flask_app.register_blueprint(chat_football, url_prefix="/ai/chat/football/")
