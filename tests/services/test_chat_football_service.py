@@ -122,7 +122,7 @@ def test_chat_football_get_cache_returns_cache_create_time():
     service.ai_service = Mock()
     service.ai_service.google_get_cache.return_value = ("cache-1", created_at)
 
-    assert service.chat_football_get_cache(user_id="user-1") == {
+    assert service.get_cache(user_id="user-1") == {
         "cache_create_time": "2026-06-01T12:00:00+00:00",
         "cache_create_time_utc_in_millis": BaseService._to_millis(created_at),
     }
@@ -140,7 +140,7 @@ def test_chat_football_refresh_cache_deletes_and_recreates_cache():
     service.doc_service.get_source_files.return_value = []
 
     with patch("webapp.services.chat_football_service.time.sleep") as sleep:
-        assert service.chat_football_refresh_cache(user_id="user-1") == {
+        assert service.refresh_cache(user_id="user-1") == {
             "cache_create_time": "2026-06-01T12:00:00+00:00",
             "cache_create_time_utc_in_millis": BaseService._to_millis(created_at),
         }

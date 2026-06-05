@@ -223,7 +223,7 @@ def test_get_chat_football_returns_422_without_user_id(monkeypatch):
 
 def test_get_chat_football_cache_returns_cache_create_time(monkeypatch):
     service = Mock()
-    service.chat_football_get_cache.return_value = {
+    service.get_cache.return_value = {
         "cache_create_time": "2026-06-01T12:00:00+00:00",
         "cache_create_time_utc_in_millis": 1780315200000,
     }
@@ -236,12 +236,12 @@ def test_get_chat_football_cache_returns_cache_create_time(monkeypatch):
         "cache_create_time": "2026-06-01T12:00:00+00:00",
         "cache_create_time_utc_in_millis": 1780315200000,
     }
-    service.chat_football_get_cache.assert_called_once_with(user_id="user-1")
+    service.get_cache.assert_called_once_with(user_id="user-1")
 
 
 def test_get_chat_football_cache_uses_user_id_header(monkeypatch):
     service = Mock()
-    service.chat_football_get_cache.return_value = {
+    service.get_cache.return_value = {
         "cache_create_time": None,
         "cache_create_time_utc_in_millis": None,
     }
@@ -258,7 +258,7 @@ def test_get_chat_football_cache_uses_user_id_header(monkeypatch):
         "cache_create_time": None,
         "cache_create_time_utc_in_millis": None,
     }
-    service.chat_football_get_cache.assert_called_once_with(user_id="header-user")
+    service.get_cache.assert_called_once_with(user_id="header-user")
 
 
 def test_get_chat_football_cache_returns_422_without_user_id(monkeypatch):
@@ -269,12 +269,12 @@ def test_get_chat_football_cache_returns_422_without_user_id(monkeypatch):
 
     assert response.status_code == 422
     assert response.get_json()["error"]["code"] == "validation_error"
-    service.chat_football_get_cache.assert_not_called()
+    service.get_cache.assert_not_called()
 
 
 def test_refresh_chat_football_cache_returns_cache_create_time(monkeypatch):
     service = Mock()
-    service.chat_football_refresh_cache.return_value = {
+    service.refresh_cache.return_value = {
         "cache_create_time": "2026-06-01T12:00:00+00:00",
         "cache_create_time_utc_in_millis": 1780315200000,
     }
@@ -287,12 +287,12 @@ def test_refresh_chat_football_cache_returns_cache_create_time(monkeypatch):
         "cache_create_time": "2026-06-01T12:00:00+00:00",
         "cache_create_time_utc_in_millis": 1780315200000,
     }
-    service.chat_football_refresh_cache.assert_called_once_with(user_id="user-1")
+    service.refresh_cache.assert_called_once_with(user_id="user-1")
 
 
 def test_refresh_chat_football_cache_uses_user_id_header(monkeypatch):
     service = Mock()
-    service.chat_football_refresh_cache.return_value = {
+    service.refresh_cache.return_value = {
         "cache_create_time": "2026-06-01T12:00:00+00:00",
         "cache_create_time_utc_in_millis": 1780315200000,
     }
@@ -309,7 +309,7 @@ def test_refresh_chat_football_cache_uses_user_id_header(monkeypatch):
         "cache_create_time": "2026-06-01T12:00:00+00:00",
         "cache_create_time_utc_in_millis": 1780315200000,
     }
-    service.chat_football_refresh_cache.assert_called_once_with(user_id="header-user")
+    service.refresh_cache.assert_called_once_with(user_id="header-user")
 
 
 def test_refresh_chat_football_cache_returns_422_without_user_id(monkeypatch):
@@ -320,7 +320,7 @@ def test_refresh_chat_football_cache_returns_422_without_user_id(monkeypatch):
 
     assert response.status_code == 422
     assert response.get_json()["error"]["code"] == "validation_error"
-    service.chat_football_refresh_cache.assert_not_called()
+    service.refresh_cache.assert_not_called()
 
 
 def test_get_chat_returns_history_from_body_user_id(monkeypatch):
