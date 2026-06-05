@@ -21,3 +21,7 @@ def test_chat_log_model_has_question_and_response_fields():
 def test_chat_log_model_has_feedback_fields():
     assert ChatLog._fields["liked"].default is None
     assert ChatLog._fields["disliked"].default is None
+
+
+def test_chat_log_model_indexes_history_lookup():
+    assert {"fields": ["key", "-created_at"]} in ChatLog._meta["indexes"]

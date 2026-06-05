@@ -14,3 +14,9 @@ class ChatLog(Document):
     disliked = BooleanField()
 
     expired = BooleanField()
+
+    meta = {
+        "indexes": [
+            {"fields": ["key", "-created_at"]},
+        ],
+    }
