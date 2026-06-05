@@ -11,19 +11,6 @@ class ChatFootballService(BaseService):
         self.doc_service = DocService()
         self.key_2 = "chat_football"
 
-    def chat_football_get_cache(self, user_id):  # Hasn't got an endpoint/caller
-        _, display_name = self._create_chat_log_key_and_display_name(user_id=user_id, key_2=self.key_2)
-        _, cache_create_time = self.ai_service.google_get_cache(display_name=display_name)
-        return self._cache_create_time_response(cache_create_time=cache_create_time)
-
-    def chat_football_refresh_cache(self, user_id):  # Hasn't got an endpoint/caller
-        _, display_name = self._create_chat_log_key_and_display_name(user_id=user_id, key_2=self.key_2)
-        self.ai_service.google_delete_cache(display_name=display_name)
-        _, _, cache_create_time = self._create_chat_football_cache(display_name=display_name)
-        return self._cache_create_time_response(cache_create_time=cache_create_time)
-
-    # def get_chat()  # Hasn't got an endpoint/caller
-
     def chat(self, user_id, request_json):
         question = self._normalize_user_input(_input=request_json["question"])
 
@@ -33,7 +20,7 @@ class ChatFootballService(BaseService):
         if cache_name:
             system_prompt = None
         else:
-            system_prompt, cache_name, cache_create_time = self._create_chat_football_cache(display_name=display_name)
+            system_prompt, cache_name, cache_create_time = self._create_cache(display_name=display_name)
 
         user_prompt = build_user_prompt(question=question)
 
@@ -47,7 +34,21 @@ class ChatFootballService(BaseService):
         )
         return self._chat_output(chat_log=chat_log, chat_api_response=chat_api_response, cache_create_time=cache_create_time)
 
-    def _create_chat_football_cache(self, display_name):
+    def get_chat(self, user_id):
+        return self.get_chat_history(user_id=user_id, key_2=self.key_2)
+
+    def get_cache(self, user_id):
+        _, display_name = self._create_chat_log_key_and_display_name(user_id=user_id, key_2=self.key_2)
+        _, cache_create_time = self.ai_service.google_get_cache(display_name=display_name)
+        return self._cache_create_time_response(cache_create_time=cache_create_time)
+
+    def refresh_cache(self, user_id):
+        _, display_name = self._create_chat_log_key_and_display_name(user_id=user_id, key_2=self.key_2)
+        self.ai_service.google_delete_cache(display_name=display_name)
+        _, _, cache_create_time = self._create_cache(display_name=display_name)
+        return self._cache_create_time_response(cache_create_time=cache_create_time)
+
+    def _create_cache(self, display_name):
         #####
         # Mock cache creation latency so refresh/create cache calls visibly take longer.
         time.sleep(15)

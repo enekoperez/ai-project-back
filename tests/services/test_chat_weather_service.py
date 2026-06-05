@@ -61,3 +61,12 @@ def test_chat_weather_uses_tools_without_rag_and_separate_history():
         cache_name=None,
     )
     assert set(ai_service.call_llm.call_args.kwargs["tool_dispatch"]) == {"get_weather"}
+
+
+def test_chat_weather_get_chat_returns_weather_history(monkeypatch):
+    history = [{"chat_log_id": "chat-1", "role": "user", "text": "Weather?"}]
+    service = ChatWeatherService()
+    monkeypatch.setattr(service, "get_chat_history", Mock(return_value=history))
+
+    assert service.get_chat(user_id="user-1") == history
+    service.get_chat_history.assert_called_once_with(user_id="user-1", key_2="chat_weather")

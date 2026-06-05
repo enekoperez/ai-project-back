@@ -152,3 +152,31 @@ def test_chat_football_refresh_cache_deletes_and_recreates_cache():
         display_name=display_name,
         system_instruction=build_system_prompt(football_data=""),
     )
+
+
+def test_chat_football_get_chat_returns_football_history():
+    created_at = datetime(2026, 6, 1, 12, 0, 0, tzinfo=timezone.utc)
+    service = ChatFootballService()
+    service.chat_log_repository = Mock()
+    service.chat_log_repository.get_history.return_value = [
+        {"role": "user", "text": "Who won?", "created_at": created_at},
+        {"role": "model", "text": '"Real Madrid"', "created_at": created_at},
+    ]
+
+    assert service.get_chat(user_id="user-1") == [
+        {
+            "role": "user",
+            "text": "Who won?",
+            "created_at": "2026-06-01T12:00:00+00:00",
+            "created_at_utc_in_millis": BaseService._to_millis(created_at),
+        },
+        {
+            "role": "model",
+            "text": "Real Madrid",
+            "created_at": "2026-06-01T12:00:00+00:00",
+            "created_at_utc_in_millis": BaseService._to_millis(created_at),
+        },
+    ]
+    service.chat_log_repository.get_history.assert_called_once_with(
+        key={"user_id": "user-1", "key_2": "chat_football"}
+    )
