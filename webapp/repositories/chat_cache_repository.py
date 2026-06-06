@@ -11,4 +11,5 @@ class ChatCacheRepository:
 
     @staticmethod
     def upsert_name(key, name):
+        # Upsert creates the cache row for this key if it does not exist yet.
         return ChatCache.objects(key=key).update_one(set__name=name, upsert=True)
