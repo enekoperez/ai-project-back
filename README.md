@@ -188,7 +188,9 @@ Content-Type: application/json
 }
 ```
 
-### Language Experiments
+### LangChain Agent Experiments
+
+These endpoints exercise LangChain and DeepAgents workflows separately from the main chat services. The simple endpoint runs a LangChain agent with a small weather tool, while the complex endpoint compares a LangChain agent with a DeepAgents setup on a tool-grounded document task.
 
 ```http
 POST /ai/lang/simple
