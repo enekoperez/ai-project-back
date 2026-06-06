@@ -4,14 +4,6 @@
 
 An AI backend service built with Flask, MongoDB, and multiple LLM providers. It combines retrieval-augmented chat, domain-specific assistants, tool calling, OCR-style document extraction, persistent conversation history, feedback logging, Docker deployment, and automated CI checks.
 
-> Portfolio note: this README is structured to show both the product value and the engineering decisions behind the project.
-
-## Demo
-
-- Live API: `TODO`
-- Screenshots: `TODO`
-- API collection: `TODO`
-
 ## Why This Project Matters
 
 This project demonstrates how to build an AI application as a maintainable backend service rather than a one-off prompt wrapper. The code separates HTTP validation, service orchestration, provider integrations, prompts, persistence, and retrieval logic so each part can be tested and evolved independently.
@@ -328,4 +320,4 @@ The GitHub Actions pipeline runs:
 
 ## Repository Status
 
-This project is intended as a portfolio centerpiece. The remaining portfolio polish is to add a live deployment URL, screenshots, and an API collection or short demo video.
+This project is a work in progress. The core backend structure, AI service integrations, tests, Docker setup, and CI workflows are in place, while deployment, documentation, and feature polish are still evolving.
