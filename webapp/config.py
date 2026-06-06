@@ -6,7 +6,7 @@ load_dotenv()
 
 
 class Config:
-    # DEBUG = False
+    DEBUG = environ["FLASK_DEBUG"].lower() == "true"  # env bool
     # TEST = False
 
     DB_CONNECTION_STRING = environ["AI_DB_CONNECTION_STRING"]
