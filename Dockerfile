@@ -11,7 +11,10 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY webapp /app/webapp
+RUN useradd --create-home appuser && chown -R appuser:appuser /app
 
 EXPOSE 80
+
+USER appuser
 
 CMD [ "gunicorn", "-w", "4", "-b", ":80", "--timeout", "120", "--worker-class", "gevent", "--worker-connections", "1000", "webapp.run:app" ]
