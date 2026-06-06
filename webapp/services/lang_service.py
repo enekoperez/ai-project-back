@@ -1,7 +1,7 @@
 import os
-import urllib.error
-import urllib.request
+import urllib.parse
 
+import requests
 from deepagents import create_deep_agent
 from langchain.agents import create_agent
 from langchain.chat_models import init_chat_model
@@ -40,17 +40,20 @@ class LangService:
     def fetch_text_from_url(url: str) -> str:
         """Fetch the document from a URL.
         """
-        req = urllib.request.Request(
-            url,
-            headers={"User-Agent": "Mozilla/5.0 (compatible; quickstart-research/1.0)"},
-        )
+        parsed_url = urllib.parse.urlparse(url)
+        if parsed_url.scheme not in {"http", "https"} or not parsed_url.netloc:
+            return "Fetch failed: URL must be an HTTP(S) URL with a host"
+
         try:
-            with urllib.request.urlopen(req, timeout=120) as resp:
-                raw = resp.read()
-        except urllib.error.URLError as e:
+            resp = requests.get(
+                url,
+                headers={"User-Agent": "Mozilla/5.0 (compatible; quickstart-research/1.0)"},
+                timeout=120,
+            )
+            resp.raise_for_status()
+        except requests.RequestException as e:
             return f"Fetch failed: {e}"
-        text = raw.decode("utf-8", errors="replace")
-        return text
+        return resp.content.decode("utf-8", errors="replace")
 
     def call_complex(self):
         SYSTEM_PROMPT = """You are a literary data assistant.

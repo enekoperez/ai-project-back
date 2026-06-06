@@ -1,6 +1,4 @@
-import json
-import urllib.error
-
+import requests
 from webapp.tools.chat_weather_tools import ChatWeatherTools
 
 
@@ -8,14 +6,11 @@ class FakeWeatherResponse:
     def __init__(self, payload):
         self.payload = payload
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc, tb):
+    def raise_for_status(self):
         return None
 
-    def read(self):
-        return json.dumps(self.payload).encode("utf-8")
+    def json(self):
+        return self.payload
 
 
 def test_chat_weather_tool_returns_open_meteo_current_weather(monkeypatch):
@@ -46,13 +41,13 @@ def test_chat_weather_tool_returns_open_meteo_current_weather(monkeypatch):
             },
         },
     ]
-    requested_urls = []
+    requests_seen = []
 
-    def urlopen(req, timeout):
-        requested_urls.append(req.full_url)
+    def get(url, params, headers, timeout):
+        requests_seen.append({"url": url, "params": params, "headers": headers, "timeout": timeout})
         return FakeWeatherResponse(responses.pop(0))
 
-    monkeypatch.setattr("webapp.tools.chat_weather_tools.urllib.request.urlopen", urlopen)
+    monkeypatch.setattr("webapp.tools.chat_weather_tools.requests.get", get)
     tools = ChatWeatherTools()
 
     assert tools.dispatch()["get_weather"](city="Oviedo") == {
@@ -71,25 +66,25 @@ def test_chat_weather_tool_returns_open_meteo_current_weather(monkeypatch):
         "wind_speed_unit": "km/h",
         "weather_code": 2,
     }
-    assert len(requested_urls) == 2
-    assert requested_urls[0].startswith("https://geocoding-api.open-meteo.com/v1/search?")
-    assert "name=Oviedo" in requested_urls[0]
-    assert requested_urls[1].startswith("https://api.open-meteo.com/v1/forecast?")
+    assert len(requests_seen) == 2
+    assert requests_seen[0]["url"] == "https://geocoding-api.open-meteo.com/v1/search"
+    assert requests_seen[0]["params"]["name"] == "Oviedo"
+    assert requests_seen[1]["url"] == "https://api.open-meteo.com/v1/forecast"
 
 
 def test_chat_weather_tool_returns_error_when_city_not_found(monkeypatch):
-    requested_urls = []
+    requests_seen = []
 
-    def urlopen(req, timeout):
-        requested_urls.append(req.full_url)
+    def get(url, params, headers, timeout):
+        requests_seen.append({"url": url, "params": params, "headers": headers, "timeout": timeout})
         return FakeWeatherResponse({})
 
-    monkeypatch.setattr("webapp.tools.chat_weather_tools.urllib.request.urlopen", urlopen)
+    monkeypatch.setattr("webapp.tools.chat_weather_tools.requests.get", get)
     tools = ChatWeatherTools()
 
     assert tools.dispatch()["get_weather"](city="Unknown City") == {"error": "City not found", "city": "Unknown City"}
-    assert len(requested_urls) == 1
-    assert requested_urls[0].startswith("https://geocoding-api.open-meteo.com/v1/search?")
+    assert len(requests_seen) == 1
+    assert requests_seen[0]["url"] == "https://geocoding-api.open-meteo.com/v1/search"
 
 
 def test_chat_weather_tool_returns_error_when_city_is_blank():
@@ -99,10 +94,10 @@ def test_chat_weather_tool_returns_error_when_city_is_blank():
 
 
 def test_chat_weather_tool_returns_error_when_api_fails(monkeypatch):
-    def urlopen(req, timeout):
-        raise urllib.error.URLError("network down")
+    def get(url, params, headers, timeout):
+        raise requests.RequestException("network down")
 
-    monkeypatch.setattr("webapp.tools.chat_weather_tools.urllib.request.urlopen", urlopen)
+    monkeypatch.setattr("webapp.tools.chat_weather_tools.requests.get", get)
     tools = ChatWeatherTools()
 
     response = tools.dispatch()["get_weather"](city="Bilbao")

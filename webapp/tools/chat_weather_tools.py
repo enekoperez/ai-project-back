@@ -1,8 +1,4 @@
-import json
-import urllib.error
-import urllib.parse
-import urllib.request
-
+import requests
 from google.genai import types
 from loguru import logger
 
@@ -54,7 +50,7 @@ class ChatWeatherTools:
                 latitude=location["latitude"],
                 longitude=location["longitude"],
             )
-        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, KeyError, TypeError) as e:
+        except (requests.RequestException, ValueError, KeyError, TypeError) as e:
             return {"error": "Weather lookup failed", "city": city, "details": str(e)}
 
         current = weather["current"]
@@ -102,10 +98,11 @@ class ChatWeatherTools:
 
     @staticmethod
     def _get_json(url: str, params: dict) -> dict:
-        query = urllib.parse.urlencode(params)
-        req = urllib.request.Request(
-            f"{url}?{query}",
+        resp = requests.get(
+            url,
+            params=params,
             headers={"User-Agent": "ai-project-weather-tool/1.0"},
+            timeout=_REQUEST_TIMEOUT_SECONDS,
         )
-        with urllib.request.urlopen(req, timeout=_REQUEST_TIMEOUT_SECONDS) as resp:
-            return json.loads(resp.read().decode("utf-8"))
+        resp.raise_for_status()
+        return resp.json()
