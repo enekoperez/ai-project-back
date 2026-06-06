@@ -1,3 +1,4 @@
+from loguru import logger
 from werkzeug.exceptions import HTTPException
 
 from webapp.api.responses import failure
@@ -24,6 +25,7 @@ def init_error_handlers(flask_app):
 
     @flask_app.errorhandler(Exception)
     def handle_unexpected_error(error):
+        logger.opt(exception=error).error("Unhandled exception")
         return failure(
             code="internal_server_error",
             message="Internal server error",

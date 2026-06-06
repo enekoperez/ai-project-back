@@ -233,23 +233,31 @@ class AiService:
 
         return response.text, model, temperature, thoughts, tool_calls
 
-    def google_get_cache(self, display_name):
-        for cache in self.google_ai_client.caches.list():
-            if cache.display_name == display_name:
+    def google_get_cache(self, cache_name):
+        if cache_name:
+            try:
+                cache = self.google_ai_client.caches.get(name=cache_name)
+            except genai_errors.ClientError as e:
+                if e.status == 'NOT_FOUND':
+                    logger.info("Google cache not found")
+                    # Usually the cache expired or was deleted; chat falls back to creating a new cache
+                    cache = None
+                else:
+                    raise RuntimeError('Cache error') from e
+            if cache:
                 return cache.name, cache.create_time
         return None, None
 
-    def google_delete_cache(self, display_name):
-        for cache in self.google_ai_client.caches.list():
-            if cache.display_name == display_name:
-                self.google_ai_client.caches.delete(name=cache.name)
-                return True
+    def google_delete_cache(self, cache_name):
+        cache_name, _ = self.google_get_cache(cache_name=cache_name)
+        if cache_name:
+            self.google_ai_client.caches.delete(name=cache_name)
+            return True
         return False
 
-    def google_set_cache(self, display_name, system_instruction, ttl_seconds: int = 600, tool_declarations=None):
+    def google_set_cache(self, system_instruction, ttl_seconds: int = 600, tool_declarations=None):
         try:
             cache_config_kwargs = {
-                'display_name': display_name,  # used to identify the cache
                 'system_instruction': system_instruction,
                 # 'contents': [video_file],
                 'ttl': f"{ttl_seconds}s",
@@ -263,6 +271,7 @@ class AiService:
             return cache.name, cache.create_time
         except genai_errors.ClientError as e:
             if e.status == 'INVALID_ARGUMENT':
+                logger.info("Google cache invalid argument")
                 # Usually the content is too small to cache (Google enforces a min token count); chat falls back to uncached
                 return None, None
             raise RuntimeError('Cache error') from e

@@ -11,7 +11,7 @@ class ChatWeatherService(BaseService):
     def chat(self, user_id, request_json):
         question = self._normalize_user_input(_input=request_json["question"])
 
-        chat_log_key, _ = self._create_chat_log_key_and_display_name(user_id=user_id, key_2=self.key_2)
+        chat_log_key = self._create_chat_log_key(user_id=user_id, key_2=self.key_2)
         chat_weather_tools = ChatWeatherTools()
 
         chat_log, chat_api_response = self._call_llm_and_log(

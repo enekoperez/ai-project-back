@@ -49,3 +49,4 @@ class ChatLogRepository:
             history.append({'chat_log_id': chat_log_id, 'role': 'user', 'text': log.user_question, 'created_at': log.created_at})
             history.append({'chat_log_id': chat_log_id, 'role': 'model', 'text': log.chat_api_response, 'created_at': log.created_at})
         return history
+

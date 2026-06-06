@@ -1,6 +1,7 @@
 import time
 
 from webapp.prompts.chat_football_prompt import build_system_prompt, build_user_prompt
+from webapp.repositories.chat_cache_repository import ChatCacheRepository
 from webapp.services.base_service import BaseService
 from webapp.services.doc_service import DocService
 
@@ -8,19 +9,22 @@ from webapp.services.doc_service import DocService
 class ChatFootballService(BaseService):
     def __init__(self):
         super().__init__()
+        self.chat_cache_repository = ChatCacheRepository()
         self.doc_service = DocService()
         self.key_2 = "chat_football"
 
     def chat(self, user_id, request_json):
         question = self._normalize_user_input(_input=request_json["question"])
 
-        chat_log_key, display_name = self._create_chat_log_key_and_display_name(user_id=user_id, key_2=self.key_2)
-        cache_name, cache_create_time = self.ai_service.google_get_cache(display_name=display_name)
+        chat_log_key = self._create_chat_log_key(user_id=user_id, key_2=self.key_2)
+
+        latest_cache_name = self.chat_cache_repository.get_name(key=chat_log_key)
+        cache_name, cache_create_time = self.ai_service.google_get_cache(cache_name=latest_cache_name)
 
         if cache_name:
             system_prompt = None
         else:
-            system_prompt, cache_name, cache_create_time = self._create_cache(display_name=display_name)
+            system_prompt, cache_name, cache_create_time = self._create_cache(chat_log_key=chat_log_key)
 
         user_prompt = build_user_prompt(question=question)
 
@@ -38,17 +42,19 @@ class ChatFootballService(BaseService):
         return self.get_chat_history(user_id=user_id, key_2=self.key_2)
 
     def get_cache(self, user_id):
-        _, display_name = self._create_chat_log_key_and_display_name(user_id=user_id, key_2=self.key_2)
-        _, cache_create_time = self.ai_service.google_get_cache(display_name=display_name)
+        chat_log_key = self._create_chat_log_key(user_id=user_id, key_2=self.key_2)
+        latest_cache_name = self.chat_cache_repository.get_name(key=chat_log_key)
+        _, cache_create_time = self.ai_service.google_get_cache(cache_name=latest_cache_name)
         return self._cache_create_time_response(cache_create_time=cache_create_time)
 
     def refresh_cache(self, user_id):
-        _, display_name = self._create_chat_log_key_and_display_name(user_id=user_id, key_2=self.key_2)
-        self.ai_service.google_delete_cache(display_name=display_name)
-        _, _, cache_create_time = self._create_cache(display_name=display_name)
+        chat_log_key = self._create_chat_log_key(user_id=user_id, key_2=self.key_2)
+        latest_cache_name = self.chat_cache_repository.get_name(key=chat_log_key)
+        self.ai_service.google_delete_cache(cache_name=latest_cache_name)
+        _, _, cache_create_time = self._create_cache(chat_log_key=chat_log_key)
         return self._cache_create_time_response(cache_create_time=cache_create_time)
 
-    def _create_cache(self, display_name):
+    def _create_cache(self, chat_log_key):
         #####
         # Mock cache creation latency so refresh/create cache calls visibly take longer.
         time.sleep(15)
@@ -59,5 +65,6 @@ class ChatFootballService(BaseService):
         #####
 
         system_prompt = build_system_prompt(football_data=football_data)
-        cache_name, cache_create_time = self.ai_service.google_set_cache(display_name=display_name, system_instruction=system_prompt)
+        cache_name, cache_create_time = self.ai_service.google_set_cache(system_instruction=system_prompt)
+        self.chat_cache_repository.upsert_name(key=chat_log_key, name=cache_name)
         return system_prompt, cache_name, cache_create_time

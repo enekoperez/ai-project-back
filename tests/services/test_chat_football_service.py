@@ -26,9 +26,12 @@ def test_chat_football_uses_chat_without_tools_and_separate_history():
     ai_service.google_set_cache.return_value = ("cache-1", created_at)
     chat_log_repository.create.return_value = Mock(id="chat-1", created_at=created_at)
     chat_log_repository.get_history.return_value = []
+    chat_cache_repository = Mock()
+    chat_cache_repository.get_name.return_value = None
     service = ChatFootballService()
     service.ai_service = ai_service
     service.chat_log_repository = chat_log_repository
+    service.chat_cache_repository = chat_cache_repository
     service.doc_service = Mock()
     service.doc_service.get_source_files.return_value = [
         {
@@ -59,10 +62,16 @@ def test_chat_football_uses_chat_without_tools_and_separate_history():
         user_question="How many players are on a football team?",
         chat_api_response="Football teams have eleven players.",
     )
-    ai_service.google_get_cache.assert_called_once_with(display_name='{"user_id": "user-1", "key_2": "chat_football"}')
+    chat_cache_repository.get_name.assert_called_once_with(
+        key={"user_id": "user-1", "key_2": "chat_football"}
+    )
+    chat_cache_repository.upsert_name.assert_called_once_with(
+        key={"user_id": "user-1", "key_2": "chat_football"},
+        name="cache-1",
+    )
+    ai_service.google_get_cache.assert_called_once_with(cache_name=None)
     sleep.assert_called_once_with(15)
     ai_service.google_set_cache.assert_called_once_with(
-        display_name='{"user_id": "user-1", "key_2": "chat_football"}',
         system_instruction=build_system_prompt(football_data="A standard football team has eleven players."),
     )
     service.doc_service.get_source_files.assert_called_once_with()
@@ -92,9 +101,12 @@ def test_chat_football_reuses_existing_cache_without_loading_football_doc():
     chat_log_repository = Mock()
     chat_log_repository.create.return_value = Mock(id="chat-1", created_at=None)
     chat_log_repository.get_history.return_value = []
+    chat_cache_repository = Mock()
+    chat_cache_repository.get_name.return_value = "cache-1"
     service = ChatFootballService()
     service.ai_service = ai_service
     service.chat_log_repository = chat_log_repository
+    service.chat_cache_repository = chat_cache_repository
     service.doc_service = Mock()
 
     response = service.chat(user_id="user-1", request_json={"question": "Who plays?"})
@@ -103,6 +115,11 @@ def test_chat_football_reuses_existing_cache_without_loading_football_doc():
     service.doc_service.get_source_files.assert_not_called()
     service.doc_service.get_source_text.assert_not_called()
     ai_service.google_set_cache.assert_not_called()
+    chat_cache_repository.get_name.assert_called_once_with(
+        key={"user_id": "user-1", "key_2": "chat_football"}
+    )
+    chat_cache_repository.upsert_name.assert_not_called()
+    ai_service.google_get_cache.assert_called_once_with(cache_name="cache-1")
     ai_service.call_llm.assert_called_once_with(
         system_prompt=None,
         user_prompt=build_user_prompt(question="Who plays?"),
@@ -120,15 +137,18 @@ def test_chat_football_get_cache_returns_cache_create_time():
     created_at = datetime(2026, 6, 1, 12, 0, 0, tzinfo=timezone.utc)
     service = ChatFootballService()
     service.ai_service = Mock()
+    service.chat_cache_repository = Mock()
+    service.chat_cache_repository.get_name.return_value = "cache-1"
     service.ai_service.google_get_cache.return_value = ("cache-1", created_at)
 
     assert service.get_cache(user_id="user-1") == {
         "cache_create_time": "2026-06-01T12:00:00+00:00",
         "cache_create_time_utc_in_millis": BaseService._to_millis(created_at),
     }
-    service.ai_service.google_get_cache.assert_called_once_with(
-        display_name='{"user_id": "user-1", "key_2": "chat_football"}'
+    service.chat_cache_repository.get_name.assert_called_once_with(
+        key={"user_id": "user-1", "key_2": "chat_football"}
     )
+    service.ai_service.google_get_cache.assert_called_once_with(cache_name="cache-1")
 
 
 def test_chat_football_refresh_cache_deletes_and_recreates_cache():
@@ -136,6 +156,8 @@ def test_chat_football_refresh_cache_deletes_and_recreates_cache():
     service = ChatFootballService()
     service.ai_service = Mock()
     service.ai_service.google_set_cache.return_value = ("cache-1", created_at)
+    service.chat_cache_repository = Mock()
+    service.chat_cache_repository.get_name.return_value = "cache-old"
     service.doc_service = Mock()
     service.doc_service.get_source_files.return_value = []
 
@@ -145,11 +167,16 @@ def test_chat_football_refresh_cache_deletes_and_recreates_cache():
             "cache_create_time_utc_in_millis": BaseService._to_millis(created_at),
         }
 
-    display_name = '{"user_id": "user-1", "key_2": "chat_football"}'
-    service.ai_service.google_delete_cache.assert_called_once_with(display_name=display_name)
+    service.chat_cache_repository.get_name.assert_called_once_with(
+        key={"user_id": "user-1", "key_2": "chat_football"}
+    )
+    service.ai_service.google_delete_cache.assert_called_once_with(cache_name="cache-old")
+    service.chat_cache_repository.upsert_name.assert_called_once_with(
+        key={"user_id": "user-1", "key_2": "chat_football"},
+        name="cache-1",
+    )
     sleep.assert_called_once_with(15)
     service.ai_service.google_set_cache.assert_called_once_with(
-        display_name=display_name,
         system_instruction=build_system_prompt(football_data=""),
     )
 

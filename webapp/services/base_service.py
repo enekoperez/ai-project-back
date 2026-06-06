@@ -20,12 +20,11 @@ class BaseService:
         return str(_input).strip()[:_MAX_USER_QUESTION_CHARS]
 
     @staticmethod
-    def _create_chat_log_key_and_display_name(user_id, key_2=None):
+    def _create_chat_log_key(user_id, key_2=None):
         chat_log_key = {'user_id': user_id}
         if key_2:
             chat_log_key['key_2'] = key_2
-        display_name = json.dumps(chat_log_key)
-        return chat_log_key, display_name
+        return chat_log_key
 
     @staticmethod
     def _try_json_loads(s):
@@ -43,7 +42,7 @@ class BaseService:
         return int(dt.timestamp() * 1000) if dt else None
 
     def get_chat_history(self, user_id, key_2=None):
-        chat_log_key, _ = self._create_chat_log_key_and_display_name(user_id=user_id, key_2=key_2)
+        chat_log_key = self._create_chat_log_key(user_id=user_id, key_2=key_2)
         history = self.chat_log_repository.get_history(key=chat_log_key)
         for entry in history:
             created_at = entry['created_at']
