@@ -1,4 +1,4 @@
-from webapp.prompts.chat_prompt import build_system_prompt, build_user_prompt
+from webapp.prompts.chat_general_prompt import build_system_prompt, build_user_prompt
 
 
 def test_build_system_prompt_instructs_rag_context_only_answers():

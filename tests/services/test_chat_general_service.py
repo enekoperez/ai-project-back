@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from unittest.mock import Mock
 
-from webapp.prompts.chat_prompt import build_system_prompt, build_user_prompt
+from webapp.prompts.chat_general_prompt import build_system_prompt, build_user_prompt
 from webapp.services.base_service import BaseService
 from webapp.services.chat_general_service import ChatGeneralService
 
