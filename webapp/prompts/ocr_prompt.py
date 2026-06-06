@@ -1,7 +1,9 @@
-def build_system_prompt() -> str:  # TODO: add XML tags
+def build_system_prompt() -> str:
     return (
         """
+        <instructions>
         You answer questions about the provided file. Be concise and only use the file content.
+        </instructions>
         """
     )
 
