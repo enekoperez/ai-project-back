@@ -18,8 +18,8 @@ class ChatFootballService(BaseService):
 
         chat_log_key = self._create_chat_log_key(user_id=user_id, key_2=self.key_2)
 
-        latest_cache_name = self.chat_cache_repository.get_name(key=chat_log_key)
-        cache_name, cache_create_time = self.ai_service.google_get_cache(cache_name=latest_cache_name)
+        chat_cache_name = self.chat_cache_repository.get_name(key=chat_log_key)
+        cache_name, cache_create_time = self.ai_service.google_get_cache(cache_name=chat_cache_name)
 
         if cache_name:
             system_prompt = None
@@ -43,14 +43,14 @@ class ChatFootballService(BaseService):
 
     def get_cache(self, user_id):
         chat_log_key = self._create_chat_log_key(user_id=user_id, key_2=self.key_2)
-        latest_cache_name = self.chat_cache_repository.get_name(key=chat_log_key)
-        _, cache_create_time = self.ai_service.google_get_cache(cache_name=latest_cache_name)
+        chat_cache_name = self.chat_cache_repository.get_name(key=chat_log_key)
+        _, cache_create_time = self.ai_service.google_get_cache(cache_name=chat_cache_name)
         return self._cache_create_time_response(cache_create_time=cache_create_time)
 
     def refresh_cache(self, user_id):
         chat_log_key = self._create_chat_log_key(user_id=user_id, key_2=self.key_2)
-        latest_cache_name = self.chat_cache_repository.get_name(key=chat_log_key)
-        self.ai_service.google_delete_cache(cache_name=latest_cache_name)
+        chat_cache_name = self.chat_cache_repository.get_name(key=chat_log_key)
+        self.ai_service.google_delete_cache(cache_name=chat_cache_name)
         _, _, cache_create_time = self._create_cache(chat_log_key=chat_log_key)
         return self._cache_create_time_response(cache_create_time=cache_create_time)
 
