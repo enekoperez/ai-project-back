@@ -2,6 +2,7 @@ name: Tests
 
 on:
   push:
+  pull_request:
   workflow_dispatch:
 
 jobs:
@@ -20,5 +21,13 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Check installed dependencies
+        run: pip check
+
+      - name: Run Ruff
+        run: |
+          pip install ruff
+          ruff check --output-format=github webapp tests
+
       - name: Run tests
-        run: pytest tests/ --cov=webapp --cov-report=term-missing --cov-fail-under=80
+        run: pytest tests/ --color=yes --cov=webapp --cov-report=term-missing --cov-fail-under=80

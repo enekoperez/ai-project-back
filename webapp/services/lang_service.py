@@ -83,7 +83,7 @@ class LangService:
             checkpointer=checkpointer,
         )
 
-        content = f"""Project Gutenberg hosts a full plain-text copy of F. Scott Fitzgerald's The Great Gatsby.
+        content = """Project Gutenberg hosts a full plain-text copy of F. Scott Fitzgerald's The Great Gatsby.
         URL: https://www.gutenberg.org/files/64317/64317-0.txt
 
         Answer as much as you can:
