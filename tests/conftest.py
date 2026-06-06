@@ -4,6 +4,7 @@ import types
 
 
 def _install_test_environment_defaults():
+    os.environ.setdefault("FLASK_DEBUG", "false")
     os.environ.setdefault("AI_DB_CONNECTION_STRING", "mongodb://localhost:27017/test_ai_db")
     os.environ.setdefault("MISTRAL_API_KEY", "test-mistral-api-key")
     os.environ.setdefault("GOOGLE_AI_API_KEY", "test-google-ai-api-key")
