@@ -1,7 +1,7 @@
 from flask import Blueprint
 
 from webapp.api.responses import success
-from webapp.api.validation import ChatRequest, validate_json, validate_user_id
+from webapp.api.validation import ChatRequest, EmptyRequest, validate_json, validate_user_id
 from webapp.services.chat_weather_service import ChatWeatherService
 
 chat_weather = Blueprint("chat_weather", __name__)
@@ -18,6 +18,7 @@ def create_chat():
 
 @chat_weather.route("", methods=["GET"])
 def get_chat():
+    validate_json(EmptyRequest)
     user_id = validate_user_id()
     response = chat_weather_service.get_chat(user_id=user_id)
     return success(response)

@@ -1,7 +1,7 @@
 from flask import Blueprint
 
 from webapp.api.responses import success
-from webapp.api.validation import ChatRequest, validate_json, validate_user_id
+from webapp.api.validation import ChatRequest, EmptyRequest, validate_json, validate_user_id
 from webapp.services.chat_football_service import ChatFootballService
 
 chat_football = Blueprint("chat_football", __name__)
@@ -18,6 +18,7 @@ def create_chat():
 
 @chat_football.route("", methods=["GET"])
 def get_chat():
+    validate_json(EmptyRequest)
     user_id = validate_user_id()
     response = chat_football_service.get_chat(user_id=user_id)
     return success(response)
@@ -25,6 +26,7 @@ def get_chat():
 
 @chat_football.route("cache", methods=["GET"])
 def get_cache():
+    validate_json(EmptyRequest)
     user_id = validate_user_id()
     response = chat_football_service.get_cache(user_id=user_id)
     return success(response)
@@ -32,6 +34,7 @@ def get_cache():
 
 @chat_football.route("cache", methods=["PUT"])
 def refresh_cache():
+    validate_json(EmptyRequest)
     user_id = validate_user_id()
     response = chat_football_service.refresh_cache(user_id=user_id)
     return success(response)

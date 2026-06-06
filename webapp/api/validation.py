@@ -17,7 +17,11 @@ class RequestValidationError(UnprocessableEntity):
 
 
 class _RequestModel(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="forbid")
+
+
+class EmptyRequest(_RequestModel):
+    pass
 
 
 class ChatRequest(_RequestModel):
@@ -46,19 +50,15 @@ def request_json():
 
 
 def validate_json(model: Type[BaseModel]):
-    return _validate(model, request_json()).model_dump()
+    return _validate(model, request_json()).model_dump(exclude_none=True)
 
 
 def validate_data(model: Type[BaseModel], data):
-    return _validate(model, data).model_dump()
+    return _validate(model, data).model_dump(exclude_none=True)
 
 
 def validate_user_id():
-    data = {**request_json()}
-    header_user_id = request.headers.get("User-Id")
-    if header_user_id is not None:
-        data["user_id"] = header_user_id
-    return validate_data(UserRequest, data)["user_id"]
+    return validate_data(UserRequest, {"user_id": request.headers.get("User-Id")})["user_id"]
 
 
 def _validate(model: Type[BaseModel], data):
