@@ -1,4 +1,4 @@
-from mongoengine import Document, DateTimeField, FloatField, IntField, ListField, StringField
+from mongoengine import DateTimeField, Document, FloatField, IntField, ListField, StringField
 
 from webapp.datetime_utils import utc_now
 
@@ -12,4 +12,9 @@ class RagChunk(Document):
     embedding = ListField(FloatField())
     model = StringField()
 
-    meta = {'indexes': ['source_name', 'model']}
+    meta = {
+        "indexes": [
+            {"fields": ["source_name"]},
+            {"fields": ["model"]},
+        ],
+    }

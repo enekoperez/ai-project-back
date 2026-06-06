@@ -14,5 +14,5 @@ def test_rag_chunk_model_has_fields():
 
 
 def test_rag_chunk_model_indexes_repository_filters():
-    assert "source_name" in RagChunk._meta["indexes"]
-    assert "model" in RagChunk._meta["indexes"]
+    assert {"fields": ["source_name"]} in RagChunk._meta["indexes"]
+    assert {"fields": ["model"]} in RagChunk._meta["indexes"]
