@@ -16,7 +16,7 @@ def make_client(monkeypatch, service):
     return app.test_client()
 
 
-def test_answer_ocr_questions_returns_response(monkeypatch):
+def test_ask_ocr_questions_returns_response(monkeypatch):
     service = Mock()
     service.ask.return_value = {
         "id": "ocr-1",

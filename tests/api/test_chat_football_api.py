@@ -16,7 +16,7 @@ def make_client(monkeypatch, service):
     return app.test_client()
 
 
-def test_chat_football_question_returns_response(monkeypatch):
+def test_create_chat_football_question_returns_response(monkeypatch):
     service = Mock()
     service.chat.return_value = {"chat_log_id": "chat-1", "chat_api_response": "Football teams have eleven players."}
     client = make_client(monkeypatch, service)
@@ -86,7 +86,7 @@ def test_get_chat_football_returns_422_without_user_id(monkeypatch):
     service.get_chat.assert_not_called()
 
 
-def test_get_chat_football_cache_returns_cache_create_time(monkeypatch):
+def test_get_cache_returns_cache_create_time(monkeypatch):
     service = Mock()
     service.get_cache.return_value = {
         "cache_create_time": "2026-06-01T12:00:00+00:00",
@@ -130,7 +130,7 @@ def test_get_chat_football_cache_returns_422_without_user_id(monkeypatch):
     service.get_cache.assert_not_called()
 
 
-def test_refresh_chat_football_cache_returns_cache_create_time(monkeypatch):
+def test_refresh_cache_returns_cache_create_time(monkeypatch):
     service = Mock()
     service.refresh_cache.return_value = {
         "cache_create_time": "2026-06-01T12:00:00+00:00",

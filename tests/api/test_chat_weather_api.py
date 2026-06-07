@@ -16,7 +16,7 @@ def make_client(monkeypatch, service):
     return app.test_client()
 
 
-def test_chat_weather_question_returns_response(monkeypatch):
+def test_create_chat_weather_question_returns_response(monkeypatch):
     service = Mock()
     service.chat.return_value = {"chat_log_id": "chat-1", "chat_api_response": "Bad weather in Bilbao."}
     client = make_client(monkeypatch, service)

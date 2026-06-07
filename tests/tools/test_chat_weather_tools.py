@@ -72,6 +72,20 @@ def test_chat_weather_tool_returns_open_meteo_current_weather(monkeypatch):
     assert requests_seen[1]["url"] == "https://api.open-meteo.com/v1/forecast"
 
 
+def test_declarations_returns_get_weather_function_declaration():
+    declaration = ChatWeatherTools().declarations()[0]
+
+    assert declaration["name"] == "get_weather"
+    assert declaration["description"] == "Get the current weather for a city."
+
+
+def test_dispatch_returns_get_weather_handler():
+    dispatch = ChatWeatherTools().dispatch()
+
+    assert list(dispatch) == ["get_weather"]
+    assert callable(dispatch["get_weather"])
+
+
 def test_chat_weather_tool_returns_error_when_city_not_found(monkeypatch):
     requests_seen = []
 

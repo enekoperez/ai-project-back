@@ -16,7 +16,7 @@ def make_client(monkeypatch, service):
     return app.test_client()
 
 
-def test_answer_chat_question_returns_response(monkeypatch):
+def test_create_chat_answer_chat_question_returns_response(monkeypatch):
     service = Mock()
     service.chat.return_value = {
         "id": "chat-1",

@@ -1,4 +1,4 @@
-from webapp.prompts.chat_football_prompt import build_system_prompt
+from webapp.prompts.chat_football_prompt import build_system_prompt, build_user_prompt
 
 
 def test_build_system_prompt_describes_football_assistant_without_tools():
@@ -10,3 +10,7 @@ def test_build_system_prompt_describes_football_assistant_without_tools():
     assert "<context>" in prompt
     assert "league table data" in prompt
     assert "todo:" not in prompt
+
+
+def test_build_user_prompt_formats_question():
+    assert build_user_prompt("How many players?") == "Question: How many players?"

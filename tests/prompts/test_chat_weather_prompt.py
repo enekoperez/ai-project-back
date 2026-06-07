@@ -1,4 +1,4 @@
-from webapp.prompts.chat_weather_prompt import build_system_prompt
+from webapp.prompts.chat_weather_prompt import build_system_prompt, build_user_prompt
 
 
 def test_build_system_prompt_requires_weather_tool():
@@ -7,3 +7,7 @@ def test_build_system_prompt_requires_weather_tool():
     assert "always call `get_weather`" in prompt
     assert "do not answer from memory" in prompt
     assert "could not retrieve weather data" in prompt
+
+
+def test_build_user_prompt_formats_question():
+    assert build_user_prompt("Weather in Bilbao?") == "Question: Weather in Bilbao?"
