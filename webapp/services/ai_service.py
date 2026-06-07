@@ -49,14 +49,14 @@ class AiService:
         self.google_ai_client = genai.Client(api_key=config.Config.GOOGLE_AI_API_KEY)
         self.openai_client = OpenAI(api_key=config.Config.OPENAI_API_KEY)
 
-    def embed(self, text, dimensions: int = 768):  # dimensions: 768, 1536, or 3072
+    def embed(self, text, dimensions):  # int = 768):  # dimensions: 768, 1536, or 3072
         model = config.Config.DEFAULT_GOOGLE_AI_EMBEDDING_MODEL
         result = self.google_ai_client.models.embed_content(
             model=model,
             contents=text,
             config=types.EmbedContentConfig(output_dimensionality=dimensions),
         )
-        return result.embeddings[0].values, model
+        return result.embeddings[0].values
 
     def _providers(self, is_chat, is_rag):
         if is_chat or is_rag:

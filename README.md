@@ -23,6 +23,7 @@ Core capabilities:
 
 - Python, Flask, Gunicorn, gevent
 - MongoDB with MongoEngine
+- Qdrant for local vector search
 - Pydantic request validation
 - Google Gemini, Mistral, and OpenAI provider integrations
 - LangChain-related dependencies for AI workflows
@@ -37,7 +38,7 @@ The application is organized around a small Flask API surface and a service laye
 webapp/
   api/             HTTP blueprints, validation, response formatting
   services/        AI orchestration, RAG, OCR, chat, domain assistants
-  repositories/    MongoDB persistence access
+  repositories/    MongoDB and Qdrant persistence access
   models/          MongoEngine document models
   prompts/         Prompt builders per assistant/task
   tools/           Model-callable tools, such as weather lookup
@@ -66,7 +67,7 @@ RAG indexing is handled by the Flask CLI:
 flask --app webapp.run rag-sync
 ```
 
-The sync process fingerprints source files, removes stale chunks, embeds changed documents, and stores vectors in MongoDB.
+The sync process reads local markdown docs, chunks and embeds them, and rebuilds the Qdrant vector collection. Qdrant stores only the source name and chunk text as payload, while MongoDB remains responsible for app data such as chat history and feedback.
 
 ### Football Assistant
 
@@ -226,6 +227,8 @@ Copy `.env.example` to `.env` and fill in the provider keys.
 ```env
 FLASK_DEBUG=false
 AI_DB_CONNECTION_STRING=mongodb://localhost:27017/ai_db
+QDRANT_URL=http://127.0.0.1:6333
+QDRANT_COLLECTION_NAME=rag_chunks
 MISTRAL_API_KEY=api-key-needed
 GOOGLE_AI_API_KEY=api-key-needed
 OPENAI_API_KEY=api-key-needed
@@ -244,7 +247,33 @@ DEFAULT_GOOGLE_AI_EMBEDDING_MODEL=gemini-embedding-2
 
 Run MongoDB locally or point `AI_DB_CONNECTION_STRING` at a reachable MongoDB instance.
 
-### 4. Start the Flask app
+### 4. Start Qdrant
+
+Run Qdrant locally with Docker:
+
+```bash
+docker run -d --name qdrant \
+  -p 6333:6333 -p 6334:6334 \
+  -v qdrant_storage:/qdrant/storage \
+  qdrant/qdrant:latest
+```
+
+On PowerShell:
+
+```powershell
+docker run -d --name qdrant `
+  -p 6333:6333 -p 6334:6334 `
+  -v qdrant_storage:/qdrant/storage `
+  qdrant/qdrant:latest
+```
+
+Dashboard:
+
+```text
+http://127.0.0.1:6333/dashboard
+```
+
+### 5. Start the Flask app
 
 ```bash
 flask --app webapp.run run
@@ -256,9 +285,9 @@ The app exposes the health check at:
 http://127.0.0.1:5000/
 ```
 
-### 5. Sync RAG documents
+### 6. Sync RAG documents
 
-Run this after configuring the Google AI key and MongoDB connection:
+Run this after configuring the Google AI key, MongoDB connection, and Qdrant. The command rebuilds the Qdrant collection and embeds all RAG documents each time.
 
 ```bash
 flask --app webapp.run rag-sync
@@ -315,8 +344,8 @@ The GitHub Actions pipeline runs:
 - Strict request validation with Pydantic models and forbidden extra fields.
 - Multi-provider AI abstraction with retry handling and provider fallback for non-chat extraction tasks.
 - Gemini tool calling with a backend weather function and bounded tool-hop loop.
-- RAG pipeline with document fingerprinting, chunk storage, embedding model tracking, and cosine similarity retrieval.
-- MongoDB indexes for chat history and RAG lookup paths.
+- RAG pipeline with markdown chunking and Qdrant cosine similarity retrieval.
+- MongoDB indexes for chat history and feedback lookup paths.
 - Structured response helpers for consistent API output.
 - Focused tests across API routes, services, repositories, DTOs, models, prompts, tools, and CLI behavior.
 

@@ -10,6 +10,8 @@ class Config:
     # TEST = False
 
     DB_CONNECTION_STRING = environ["AI_DB_CONNECTION_STRING"]
+    QDRANT_URL = environ["QDRANT_URL"]
+    QDRANT_COLLECTION_NAME = environ["QDRANT_COLLECTION_NAME"]
 
     MISTRAL_API_KEY = environ["MISTRAL_API_KEY"]
     GOOGLE_AI_API_KEY = environ["GOOGLE_AI_API_KEY"]

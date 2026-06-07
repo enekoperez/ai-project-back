@@ -17,8 +17,6 @@ def test_get_source_files_returns_markdown_files_sorted(tmp_path):
         "basketball.md",
         "football.md",
     ]
-    assert all(source_file["mime_type"] == "text/markdown" for source_file in source_files)
-    assert all("source_fingerprint" in source_file for source_file in source_files)
     assert all(Path(source_file["path"]).is_absolute() for source_file in source_files)
 
 

@@ -14,11 +14,11 @@ class DocService:
             if not source_path.is_file():
                 continue
 
-            stat = source_path.stat()
+            # stat = source_path.stat()
             source_files.append({
                 "source_name": source_path.name,
-                "source_fingerprint": f"{stat.st_size}:{stat.st_mtime_ns}",  # TODO: is this a good/valid fingerprint ?
-                "mime_type": "text/markdown",
+                # "source_fingerprint": f"{stat.st_size}:{stat.st_mtime_ns}",  # is this a good/valid fingerprint ?
+                # "mime_type": "text/markdown",
                 "path": str(source_path.resolve()),  # Needed for get_source_text()
             })
 

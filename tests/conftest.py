@@ -6,6 +6,8 @@ import types
 def _install_test_environment_defaults():
     os.environ.setdefault("FLASK_DEBUG", "false")
     os.environ.setdefault("AI_DB_CONNECTION_STRING", "mongodb://localhost:27017/test_ai_db")
+    os.environ.setdefault("QDRANT_URL", "http://127.0.0.1:6333")
+    os.environ.setdefault("QDRANT_COLLECTION_NAME", "rag_chunks")
     os.environ.setdefault("MISTRAL_API_KEY", "test-mistral-api-key")
     os.environ.setdefault("GOOGLE_AI_API_KEY", "test-google-ai-api-key")
     os.environ.setdefault("OPENAI_API_KEY", "test-openai-api-key")
@@ -87,5 +89,44 @@ def _install_ai_dependency_stubs():
     sys.modules.setdefault("openai.types.responses", openai_responses_module)
 
 
+def _install_qdrant_dependency_stubs():
+    try:
+        import qdrant_client  # noqa: F401
+        import qdrant_client.models  # noqa: F401
+        return
+    except ModuleNotFoundError:
+        pass
+
+    qdrant_client_module = types.ModuleType("qdrant_client")
+    qdrant_models_module = types.ModuleType("qdrant_client.models")
+
+    class QdrantClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+    class _Distance:
+        COSINE = "Cosine"
+
+    class PointStruct:
+        def __init__(self, id, vector, payload):
+            self.id = id
+            self.vector = vector
+            self.payload = payload
+
+    class VectorParams:
+        def __init__(self, size, distance):
+            self.size = size
+            self.distance = distance
+
+    qdrant_client_module.QdrantClient = QdrantClient
+    qdrant_models_module.Distance = _Distance
+    qdrant_models_module.PointStruct = PointStruct
+    qdrant_models_module.VectorParams = VectorParams
+
+    sys.modules.setdefault("qdrant_client", qdrant_client_module)
+    sys.modules.setdefault("qdrant_client.models", qdrant_models_module)
+
+
 _install_test_environment_defaults()
 _install_ai_dependency_stubs()
+_install_qdrant_dependency_stubs()
