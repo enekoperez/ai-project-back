@@ -4,11 +4,11 @@ from webapp.api.responses import success
 from webapp.api.validation import ChatRequest, EmptyRequest, validate_json, validate_user_id
 from webapp.services.chat_weather_service import ChatWeatherService
 
-chat_weather = Blueprint("chat_weather", __name__)
+chat_weather_v1 = Blueprint("chat_weather_v1", __name__)
 chat_weather_service = ChatWeatherService()
 
 
-@chat_weather.route("", methods=["POST"])
+@chat_weather_v1.route("", methods=["POST"])
 def create_chat():
     user_id = validate_user_id()
     request_json = validate_json(ChatRequest)
@@ -16,7 +16,7 @@ def create_chat():
     return success(response, status=201)
 
 
-@chat_weather.route("", methods=["GET"])
+@chat_weather_v1.route("", methods=["GET"])
 def get_chat():
     validate_json(EmptyRequest)
     user_id = validate_user_id()

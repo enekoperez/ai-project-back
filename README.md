@@ -100,7 +100,7 @@ GET /
 ### General RAG Chat
 
 ```http
-POST /ai/chat/general/
+POST /api/ai/v1/chat/general/
 Content-Type: application/json
 User-Id: demo-user
 
@@ -110,14 +110,14 @@ User-Id: demo-user
 ```
 
 ```http
-GET /ai/chat/general/
+GET /api/ai/v1/chat/general/
 User-Id: demo-user
 ```
 
 ### Football Chat
 
 ```http
-POST /ai/chat/football/
+POST /api/ai/v1/chat/football/
 Content-Type: application/json
 User-Id: demo-user
 
@@ -127,17 +127,17 @@ User-Id: demo-user
 ```
 
 ```http
-GET /ai/chat/football/
+GET /api/ai/v1/chat/football/
 User-Id: demo-user
 ```
 
 ```http
-GET /ai/chat/football/cache
+GET /api/ai/v1/chat/football/cache
 User-Id: demo-user
 ```
 
 ```http
-PUT /ai/chat/football/cache
+PUT /api/ai/v1/chat/football/cache
 Content-Type: application/json
 User-Id: demo-user
 
@@ -147,7 +147,7 @@ User-Id: demo-user
 ### Weather Chat
 
 ```http
-POST /ai/chat/weather/
+POST /api/ai/v1/chat/weather/
 Content-Type: application/json
 User-Id: demo-user
 
@@ -157,21 +157,21 @@ User-Id: demo-user
 ```
 
 ```http
-GET /ai/chat/weather/
+GET /api/ai/v1/chat/weather/
 User-Id: demo-user
 ```
 
 ### Chat Feedback
 
 ```http
-PUT /ai/chat/<chat_log_id>/like
+PUT /api/ai/v1/chat/<chat_log_id>/like
 Content-Type: application/json
 
 {}
 ```
 
 ```http
-PUT /ai/chat/<chat_log_id>/dislike
+PUT /api/ai/v1/chat/<chat_log_id>/dislike
 Content-Type: application/json
 
 {}
@@ -180,7 +180,7 @@ Content-Type: application/json
 ### OCR
 
 ```http
-POST /ai/ocr/
+POST /api/ai/v1/ocr/
 Content-Type: application/json
 
 {
@@ -194,7 +194,7 @@ Content-Type: application/json
 These endpoints exercise LangChain and DeepAgents workflows separately from the main chat services. The simple endpoint runs a LangChain agent with a small weather tool, while the complex endpoint compares a LangChain agent with a DeepAgents setup on a tool-grounded document task.
 
 ```http
-POST /ai/lang/simple
+POST /api/ai/v1/lang/simple
 Content-Type: application/json
 
 {
@@ -203,7 +203,7 @@ Content-Type: application/json
 ```
 
 ```http
-POST /ai/lang/complex
+POST /api/ai/v1/lang/complex
 Content-Type: application/json
 
 {}

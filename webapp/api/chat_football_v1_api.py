@@ -4,11 +4,11 @@ from webapp.api.responses import success
 from webapp.api.validation import ChatRequest, EmptyRequest, validate_json, validate_user_id
 from webapp.services.chat_football_service import ChatFootballService
 
-chat_football = Blueprint("chat_football", __name__)
+chat_football_v1 = Blueprint("chat_football_v1", __name__)
 chat_football_service = ChatFootballService()
 
 
-@chat_football.route("", methods=["POST"])
+@chat_football_v1.route("", methods=["POST"])
 def create_chat():
     user_id = validate_user_id()
     request_json = validate_json(ChatRequest)
@@ -16,7 +16,7 @@ def create_chat():
     return success(response, status=201)
 
 
-@chat_football.route("", methods=["GET"])
+@chat_football_v1.route("", methods=["GET"])
 def get_chat():
     validate_json(EmptyRequest)
     user_id = validate_user_id()
@@ -24,7 +24,7 @@ def get_chat():
     return success(response)
 
 
-@chat_football.route("cache", methods=["GET"])
+@chat_football_v1.route("cache", methods=["GET"])
 def get_cache():
     validate_json(EmptyRequest)
     user_id = validate_user_id()
@@ -32,7 +32,7 @@ def get_cache():
     return success(response)
 
 
-@chat_football.route("cache", methods=["PUT"])
+@chat_football_v1.route("cache", methods=["PUT"])
 def refresh_cache():
     validate_json(EmptyRequest)
     user_id = validate_user_id()

@@ -4,11 +4,11 @@ from webapp.api.responses import success
 from webapp.api.validation import ChatRequest, EmptyRequest, validate_json, validate_user_id
 from webapp.services.chat_general_service import ChatGeneralService
 
-chat_general = Blueprint("chat_general", __name__)
+chat_general_v1 = Blueprint("chat_general_v1", __name__)
 chat_general_service = ChatGeneralService()
 
 
-@chat_general.route("", methods=["POST"])
+@chat_general_v1.route("", methods=["POST"])
 def create_chat():
     user_id = validate_user_id()
     request_json = validate_json(ChatRequest)
@@ -16,7 +16,7 @@ def create_chat():
     return success(response, status=201)
 
 
-@chat_general.route("", methods=["GET"])
+@chat_general_v1.route("", methods=["GET"])
 def get_chat():
     validate_json(EmptyRequest)
     user_id = validate_user_id()
