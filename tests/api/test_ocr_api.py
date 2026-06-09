@@ -12,7 +12,7 @@ def make_client(monkeypatch, service):
 
     app = Flask(__name__)
     init_error_handlers(app)
-    app.register_blueprint(ocr_v1, url_prefix="/api/ai/v1/ocr/")
+    app.register_blueprint(ocr_v1, url_prefix="/ai/v1/ocr/")
     return app.test_client()
 
 
@@ -29,7 +29,7 @@ def test_ask_ocr_questions_returns_response(monkeypatch):
         "file_url": "https://example.com/invoice.pdf",
         "questions": ["What is the total?"],
     }
-    response = client.post("/api/ai/v1/ocr/", json=request_json)
+    response = client.post("/ai/v1/ocr/", json=request_json)
 
     assert response.status_code == 201
     assert_success_response(response, {
@@ -44,7 +44,7 @@ def test_answer_ocr_questions_returns_422_without_file_url(monkeypatch):
     service = Mock()
     client = make_client(monkeypatch, service)
 
-    response = client.post("/api/ai/v1/ocr/", json={"questions": ["What is the total?"]})
+    response = client.post("/ai/v1/ocr/", json={"questions": ["What is the total?"]})
 
     assert response.status_code == 422
     assert_error_code(response, "validation_error")
@@ -55,7 +55,7 @@ def test_answer_ocr_questions_returns_422_with_empty_questions(monkeypatch):
     service = Mock()
     client = make_client(monkeypatch, service)
 
-    response = client.post("/api/ai/v1/ocr/", json={"file_url": "https://example.com/invoice.pdf", "questions": []})
+    response = client.post("/ai/v1/ocr/", json={"file_url": "https://example.com/invoice.pdf", "questions": []})
 
     assert response.status_code == 422
     assert_error_code(response, "validation_error")
@@ -66,7 +66,7 @@ def test_answer_ocr_questions_returns_422_with_blank_question(monkeypatch):
     service = Mock()
     client = make_client(monkeypatch, service)
 
-    response = client.post("/api/ai/v1/ocr/", json={"file_url": "https://example.com/invoice.pdf", "questions": [" "]})
+    response = client.post("/ai/v1/ocr/", json={"file_url": "https://example.com/invoice.pdf", "questions": [" "]})
 
     assert response.status_code == 422
     assert_error_code(response, "validation_error")
@@ -77,7 +77,7 @@ def test_get_ocr_is_not_available(monkeypatch):
     service = Mock()
     client = make_client(monkeypatch, service)
 
-    response = client.get("/api/ai/v1/ocr/")
+    response = client.get("/ai/v1/ocr/")
 
     assert response.status_code == 405
     assert_error_code(response, "method_not_allowed")

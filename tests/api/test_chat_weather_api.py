@@ -12,7 +12,7 @@ def make_client(monkeypatch, service):
 
     app = Flask(__name__)
     init_error_handlers(app)
-    app.register_blueprint(chat_weather_v1, url_prefix="/api/ai/v1/chat/weather/")
+    app.register_blueprint(chat_weather_v1, url_prefix="/ai/v1/chat/weather/")
     return app.test_client()
 
 
@@ -22,7 +22,7 @@ def test_create_chat_weather_question_returns_response(monkeypatch):
     client = make_client(monkeypatch, service)
 
     request_json = {"question": "What's the weather in Bilbao?"}
-    response = client.post("/api/ai/v1/chat/weather/", json=request_json, headers={"User-Id": "user-1"})
+    response = client.post("/ai/v1/chat/weather/", json=request_json, headers={"User-Id": "user-1"})
 
     assert response.status_code == 201
     assert_success_response(response, {"chat_log_id": "chat-1", "chat_api_response": "Bad weather in Bilbao."})
@@ -34,7 +34,7 @@ def test_chat_weather_rejects_user_id_in_body(monkeypatch):
     client = make_client(monkeypatch, service)
 
     request_json = {"user_id": "body-user", "question": "What's the weather in Oviedo?"}
-    response = client.post("/api/ai/v1/chat/weather/", json=request_json, headers={"User-Id": "header-user"})
+    response = client.post("/ai/v1/chat/weather/", json=request_json, headers={"User-Id": "header-user"})
 
     assert response.status_code == 422
     assert_error_code(response, "validation_error")
@@ -45,7 +45,7 @@ def test_chat_weather_returns_422_for_empty_question(monkeypatch):
     service = Mock()
     client = make_client(monkeypatch, service)
 
-    response = client.post("/api/ai/v1/chat/weather/", json={"question": " "}, headers={"User-Id": "user-1"})
+    response = client.post("/ai/v1/chat/weather/", json={"question": " "}, headers={"User-Id": "user-1"})
 
     assert response.status_code == 422
     assert_error_code(response, "validation_error")
@@ -57,7 +57,7 @@ def test_get_chat_weather_returns_history_from_user_id_header(monkeypatch):
     service.get_chat.return_value = [{"chat_log_id": "chat-1", "role": "user", "text": "Weather?"}]
     client = make_client(monkeypatch, service)
 
-    response = client.get("/api/ai/v1/chat/weather/", headers={"User-Id": "user-1"})
+    response = client.get("/ai/v1/chat/weather/", headers={"User-Id": "user-1"})
 
     assert response.status_code == 200
     assert_success_response(response, [{"chat_log_id": "chat-1", "role": "user", "text": "Weather?"}])
@@ -68,7 +68,7 @@ def test_get_chat_weather_rejects_user_id_in_body(monkeypatch):
     service = Mock()
     client = make_client(monkeypatch, service)
 
-    response = client.get("/api/ai/v1/chat/weather/", json={"user_id": "body-user"}, headers={"User-Id": "header-user"})
+    response = client.get("/ai/v1/chat/weather/", json={"user_id": "body-user"}, headers={"User-Id": "header-user"})
 
     assert response.status_code == 422
     assert_error_code(response, "validation_error")
@@ -79,7 +79,7 @@ def test_get_chat_weather_returns_422_without_user_id(monkeypatch):
     service = Mock()
     client = make_client(monkeypatch, service)
 
-    response = client.get("/api/ai/v1/chat/weather/")
+    response = client.get("/ai/v1/chat/weather/")
 
     assert response.status_code == 422
     assert_error_code(response, "validation_error")
