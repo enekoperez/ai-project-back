@@ -4,7 +4,6 @@ from flask import request
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, constr
 from werkzeug.exceptions import UnprocessableEntity
 
-
 NonEmptyString = constr(strip_whitespace=True, min_length=1)
 
 

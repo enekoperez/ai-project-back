@@ -1,6 +1,7 @@
-import pytest
 from datetime import datetime, timezone
 from unittest.mock import Mock
+
+import pytest
 
 from webapp.services.base_service import BaseService
 

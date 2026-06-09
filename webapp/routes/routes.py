@@ -1,12 +1,11 @@
-from webapp.api.responses import success
-from webapp.api.chat_v1_api import chat_v1
 from webapp.api.chat_football_v1_api import chat_football_v1
 from webapp.api.chat_general_v1_api import chat_general_v1
+from webapp.api.chat_v1_api import chat_v1
 from webapp.api.chat_weather_v1_api import chat_weather_v1
 from webapp.api.lang_v1_api import lang_v1
 from webapp.api.ocr_v1_api import ocr_v1
+from webapp.api.responses import success
 from webapp.routes.error_handlers import init_error_handlers
-
 
 V1_PREFIX = "/ai/v1"
 

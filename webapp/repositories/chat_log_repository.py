@@ -1,7 +1,7 @@
 from datetime import timedelta
 
-from webapp.models.chat_log_domain import ChatLog
 from webapp.datetime_utils import utc_now
+from webapp.models.chat_log_domain import ChatLog
 
 
 class ChatLogRepository:

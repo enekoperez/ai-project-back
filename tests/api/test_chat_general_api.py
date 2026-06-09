@@ -2,9 +2,9 @@ from unittest.mock import Mock
 
 from flask import Flask
 
+from response_assertions import assert_error_code, assert_success_response
 from webapp.api.chat_general_v1_api import chat_general_v1
 from webapp.routes.error_handlers import init_error_handlers
-from response_assertions import assert_error_code, assert_success_response
 
 
 def make_client(monkeypatch, service):
