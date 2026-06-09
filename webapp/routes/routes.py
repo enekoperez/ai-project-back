@@ -8,7 +8,7 @@ from webapp.api.ocr_v1_api import ocr_v1
 from webapp.routes.error_handlers import init_error_handlers
 
 
-API_V1_PREFIX = "/api/ai/v1/"
+V1_PREFIX = "/ai/v1"
 
 
 def init_routes(flask_app):
@@ -20,9 +20,9 @@ def init_routes(flask_app):
     def health_check():
         return success({"status": "OK"})
 
-    flask_app.register_blueprint(chat_v1, url_prefix=f"{API_V1_PREFIX}/chat/")
-    flask_app.register_blueprint(chat_football_v1, url_prefix=f"{API_V1_PREFIX}/chat/football/")
-    flask_app.register_blueprint(chat_general_v1, url_prefix=f"{API_V1_PREFIX}/chat/general/")
-    flask_app.register_blueprint(chat_weather_v1, url_prefix=f"{API_V1_PREFIX}/chat/weather/")
-    flask_app.register_blueprint(lang_v1, url_prefix=f"{API_V1_PREFIX}/lang/")
-    flask_app.register_blueprint(ocr_v1, url_prefix=f"{API_V1_PREFIX}/ocr/")
+    flask_app.register_blueprint(chat_v1, url_prefix=f"{V1_PREFIX}/chat/")
+    flask_app.register_blueprint(chat_football_v1, url_prefix=f"{V1_PREFIX}/chat/football/")
+    flask_app.register_blueprint(chat_general_v1, url_prefix=f"{V1_PREFIX}/chat/general/")
+    flask_app.register_blueprint(chat_weather_v1, url_prefix=f"{V1_PREFIX}/chat/weather/")
+    flask_app.register_blueprint(lang_v1, url_prefix=f"{V1_PREFIX}/lang/")
+    flask_app.register_blueprint(ocr_v1, url_prefix=f"{V1_PREFIX}/ocr/")
