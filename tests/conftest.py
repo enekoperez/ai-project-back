@@ -32,9 +32,45 @@ def _install_ai_dependency_stubs():
     def _typed_config(**kwargs):
         return kwargs
 
+    class _Part:
+        def __init__(self, text=None, thought=None, function_call=None, **kwargs):
+            self.text = text
+            self.thought = thought
+            self.function_call = function_call
+            for key, value in kwargs.items():
+                setattr(self, key, value)
+
+        @classmethod
+        def from_text(cls, text):
+            return cls(text=text)
+
+        @classmethod
+        def from_uri(cls, file_uri, mime_type):
+            return cls(file_uri=file_uri, mime_type=mime_type)
+
+        @classmethod
+        def from_function_response(cls, name, response):
+            return cls(name=name, response=response)
+
+    class _Content:
+        def __init__(self, role=None, parts=None):
+            self.role = role
+            self.parts = parts or []
+
     genai_types_module.FunctionDeclaration = _typed_config
     genai_types_module.Schema = _typed_config
     genai_types_module.Type = types.SimpleNamespace(OBJECT="OBJECT", STRING="STRING")
+    genai_types_module.Part = _Part
+    genai_types_module.Content = _Content
+    genai_types_module.Tool = _typed_config
+    genai_types_module.ThinkingConfig = _typed_config
+    genai_types_module.GenerateContentConfig = _typed_config
+    genai_types_module.EmbedContentConfig = _typed_config
+    genai_types_module.CreateCachedContentConfig = _typed_config
+    genai_types_module.ThinkingLevel = types.SimpleNamespace(MINIMAL="MINIMAL", MEDIUM="MEDIUM")
+    genai_types_module.MediaResolution = types.SimpleNamespace(
+        MEDIA_RESOLUTION_MEDIUM="MEDIA_RESOLUTION_MEDIUM"
+    )
 
     genai_errors_module.ClientError = ClientError
     genai_module.Client = _Client
