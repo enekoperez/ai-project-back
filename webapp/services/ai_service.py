@@ -19,7 +19,7 @@ class UnsupportedGoogleMimeTypeError(Exception):
 
 _MAX_RETRIES = 3
 _RETRY_DELAY_S = 3
-_HOP_RANGE = 5  # TODO: 5 ?????
+_MAX_TOOL_HOPS = 5
 
 
 class AiService:
@@ -199,7 +199,7 @@ class AiService:
         contents.append(types.Content(role='user', parts=current_parts))
 
         thought_parts, tool_calls = [], []
-        for _hop in range(_HOP_RANGE):
+        for tool_hop in range(_MAX_TOOL_HOPS):  # while True:
             response = self.google_ai_client.models.generate_content(
                 model=model,
                 config=types.GenerateContentConfig(**config_kwargs),
@@ -222,7 +222,7 @@ class AiService:
             tool_response_parts = []
             for fc in function_calls:
                 args = dict(fc.args) if fc.args else {}  # vars/params to send/use with tool/method/function
-                tool_calls.append({'hop': _hop, 'name': fc.name, 'args': args})
+                tool_calls.append({'tool_hop': tool_hop, 'name': fc.name, 'args': args})
                 result = tool_dispatch[fc.name](**args)  # run the local Python function
                 tool_response_parts.append(types.Part.from_function_response(name=fc.name, response=result))  # wrap result, tag with name so Gemini matches it
             # all tool results go back as one user-role turn (Gemini convention)
