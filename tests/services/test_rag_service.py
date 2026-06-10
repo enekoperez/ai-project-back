@@ -38,7 +38,12 @@ def test_prepare_query_and_document():
 
 def test_sync_rebuilds_qdrant_from_source_files():
     ai_service = Mock()
-    ai_service.embed.return_value = [0.1, 0.2]
+    ai_service.embed.return_value = [
+        [0.1, 0.2],
+        [0.1, 0.2],
+        [0.1, 0.2],
+        [0.1, 0.2],
+    ]
     qdrant_repository = Mock()
     doc_service = Mock()
     doc_service.get_source_files.return_value = [
@@ -56,7 +61,9 @@ def test_sync_rebuilds_qdrant_from_source_files():
 
     qdrant_repository.recreate_collection.assert_called_once_with(vector_size=768)
     assert doc_service.get_source_text.call_count == 2
-    assert ai_service.embed.call_count == 4
+    ai_service.embed.assert_called_once()
+    assert len(ai_service.embed.call_args.kwargs["texts"]) == 4
+    assert ai_service.embed.call_args.kwargs["dimensions"] == 768
     assert qdrant_repository.upsert_chunk.call_count == 4
 
 
@@ -72,7 +79,7 @@ def test_chunk_markdown_splits_text_into_max_sized_chunks():
 
 def test_get_top_chunks_filters_scores_and_sorts_top_matches():
     ai_service = Mock()
-    ai_service.embed.return_value = [1.0, 0.0]
+    ai_service.embed.return_value = [[1.0, 0.0]]
     qdrant_repository = Mock()
     qdrant_repository.query_chunks.return_value = [
         {"source_name": "best.md", "text": "Best", "score": 1.0},
@@ -85,7 +92,7 @@ def test_get_top_chunks_filters_scores_and_sorts_top_matches():
         {"source_name": "middle.md", "text": "Middle", "score": 0.8},
     ]
     ai_service.embed.assert_called_once_with(
-        text="task: question answering | query: What sport?",
+        texts=["task: question answering | query: What sport?"],
         dimensions=768,
     )
     qdrant_repository.query_chunks.assert_called_once_with(
