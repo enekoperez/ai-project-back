@@ -1,3 +1,5 @@
+import re
+
 from loguru import logger
 
 from webapp.repositories.qdrant_repository import QdrantRepository
@@ -7,6 +9,8 @@ from webapp.services.doc_service import DocService
 _EMBEDDING_DIMENSIONS = 768
 _EMBEDDING_BATCH_SIZE = 50
 _MAX_CHUNK_CHARS = 1600  # Text	- Supports up to 8,192 tokens.
+_HEADING_PATTERN = re.compile(r"^(#{1,6})\s+(.+?)\s*$")  # Markdown heading: 1-6 '#' followed by the title.
+_CHUNK_OVERLAP_CHARS = round(_MAX_CHUNK_CHARS * 0.15)  # Consecutive chunks repeat this much text so facts on a boundary survive in one piece.
 _TOP_K = 5  # Retrieval size tradeoff: 3 is lean, 5 is better for multi-step help questions, 8 is broader but noisier.
 _MIN_SCORE = 0.6  # Cosine-similarity floor: 0.5 lenient, 0.6 balanced, 0.7 strict. Chunks below this are dropped.
 
@@ -78,16 +82,122 @@ class RagService:
             yield items[index:index + size]
 
     @staticmethod
-    def _chunk_markdown(text):  # TODO: optimize
+    def _chunk_markdown(text: str) -> list[str]:
+        """Splits a markdown document into size-limited chunks, each prefixed with its heading path.
+
+        Example: "# A\\n\\nHi\\n\\n## B\\n\\nYo" -> ["A\\n\\nHi", "A > B\\n\\nYo"]
+        """
         text = text.strip()  # Removes whitespace from the start and end of the full text.
         if not text:  # If the text is empty after stripping, returns an empty list.
             return []
 
         response = []
-        for i in range(0, len(text), _MAX_CHUNK_CHARS):  # Cuts the text into pieces of maximum _MAX_CHUNK_CHARS characters.
-            response.append(text[i:i + _MAX_CHUNK_CHARS])
-        # Returns those pieces as a list.
+        for heading_path, body in RagService._split_sections(text):
+            for piece in RagService._split_body(body):
+                # Prepends the heading path (e.g. "Football > Core Rules") so each chunk keeps its document context.
+                response.append(f"{heading_path}\n\n{piece}" if heading_path else piece)
         return response
+
+    @staticmethod
+    def _split_sections(text: str) -> list[tuple[str, str]]:
+        """Groups the document's text under its heading path, walking it line by line.
+
+        Example: "# A\\n\\nHi\\n\\n## B\\n\\nYo" -> [("A", "Hi"), ("A > B", "Yo")]
+        """
+        sections = []
+        titles_by_level = {}  # Current heading per level, e.g. {1: "Football", 2: "Core Rules"}.
+        body_lines = []
+        in_code_fence = False
+
+        def flush() -> None:
+            """Closes the section being accumulated: appends (heading path, body) to sections and clears body_lines.
+
+            Example: titles_by_level={1: "A"}, body_lines=["Hi"] -> sections grows with ("A", "Hi")
+            """
+            body = "\n".join(body_lines).strip()
+            if body:
+                heading_path = " > ".join(titles_by_level[level] for level in sorted(titles_by_level))
+                sections.append((heading_path, body))
+            body_lines.clear()
+
+        for line in text.splitlines():
+            if line.lstrip().startswith("```"):  # Inside fenced code blocks a leading '#' is a comment, not a heading.
+                in_code_fence = not in_code_fence
+            heading = None if in_code_fence else _HEADING_PATTERN.match(line)
+            if heading:
+                flush()  # The accumulated body belongs to the previous heading path.
+                level = len(heading.group(1))
+                # A new heading replaces its level and resets every deeper level.
+                titles_by_level = {l: t for l, t in titles_by_level.items() if l < level}
+                titles_by_level[level] = heading.group(2)
+            else:
+                body_lines.append(line)
+        flush()
+        return sections
+
+    @staticmethod
+    def _split_body(body: str) -> list[str]:
+        """Packs paragraphs into chunks of up to _MAX_CHUNK_CHARS, overlapping consecutive chunks.
+
+        Example: "P1.\\n\\nP2." -> ["P1.\\n\\nP2."] (or ["P1. ...", "...tail P2."] if over the limit)
+        """
+        paragraphs = []
+        for paragraph in re.split(r"\n\s*\n", body):  # Paragraphs are separated by blank lines.
+            paragraph = paragraph.strip()
+            if not paragraph:
+                continue
+            if len(paragraph) <= _MAX_CHUNK_CHARS:
+                paragraphs.append(paragraph)
+            else:
+                paragraphs.extend(RagService._split_long_paragraph(paragraph))
+
+        chunks = []
+        current = ""
+        for paragraph in paragraphs:
+            candidate = f"{current}\n\n{paragraph}" if current else paragraph
+            if len(candidate) <= _MAX_CHUNK_CHARS:
+                current = candidate
+            else:
+                if current:
+                    chunks.append(current)
+                    # The next chunk starts with the tail of this one so boundary facts appear whole in at least one chunk.
+                    paragraph = f"{RagService._overlap_tail(current)}\n\n{paragraph}"
+                current = paragraph
+        if current:
+            chunks.append(current)
+        return chunks
+
+    @staticmethod
+    def _split_long_paragraph(paragraph: str) -> list[str]:
+        """Splits an oversized paragraph at word boundaries, never mid-word.
+
+        Example: "aaa bbb ccc" (limit 7) -> ["aaa bbb", "ccc"]
+        """
+        parts = []
+        current = ""
+        for word in paragraph.split():
+            candidate = f"{current} {word}" if current else word
+            if len(candidate) <= _MAX_CHUNK_CHARS:
+                current = candidate
+            else:
+                if current:
+                    parts.append(current)
+                current = word  # A single word longer than the limit stays whole as its own oversized part.
+        if current:
+            parts.append(current)
+        return parts
+
+    @staticmethod
+    def _overlap_tail(text: str) -> str:
+        """Returns the last ~_CHUNK_OVERLAP_CHARS of the text, cut on a word boundary.
+
+        Example: "one two three four" (overlap 9) -> "hree four" -> "four"
+        """
+        if len(text) <= _CHUNK_OVERLAP_CHARS:
+            return text
+        tail = text[-_CHUNK_OVERLAP_CHARS:]
+        space_index = tail.find(" ")  # Drops the first partial word so the overlap starts on a word boundary.
+        return tail[space_index + 1:] if space_index != -1 else tail
 
     def get_top_chunks(self, question):
         question_embedding = self.ai_service.embed(
