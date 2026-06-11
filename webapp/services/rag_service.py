@@ -128,7 +128,7 @@ class RagService:
                 flush()  # The accumulated body belongs to the previous heading path.
                 level = len(heading.group(1))
                 # A new heading replaces its level and resets every deeper level.
-                titles_by_level = {l: t for l, t in titles_by_level.items() if l < level}
+                titles_by_level = {lvl: title for lvl, title in titles_by_level.items() if lvl < level}
                 titles_by_level[level] = heading.group(2)
             else:
                 body_lines.append(line)
