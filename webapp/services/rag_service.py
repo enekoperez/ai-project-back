@@ -142,10 +142,8 @@ class RagService:
         Example: "P1.\\n\\nP2." -> ["P1.\\n\\nP2."] (or ["P1. ...", "...tail P2."] if over the limit)
         """
         paragraphs = []
-        for paragraph in re.split(r"\n\s*\n", body):  # Paragraphs are separated by blank lines.
-            paragraph = paragraph.strip()
-            if not paragraph:
-                continue
+        # Paragraphs are separated by blank lines; filter(None, ...) drops whitespace-only pieces.
+        for paragraph in filter(None, (p.strip() for p in re.split(r"\n\s*\n", body))):
             if len(paragraph) <= _MAX_CHUNK_CHARS:
                 paragraphs.append(paragraph)
             else:
