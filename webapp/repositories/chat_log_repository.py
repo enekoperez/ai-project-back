@@ -14,6 +14,13 @@ class ChatLogRepository:
         )
 
     @staticmethod
+    def get_chat_log_by_user_id(chat_log_id, user_id):
+        log = ChatLog.objects(id=chat_log_id).only("key").first()
+        if not log or log.key.get("user_id") != user_id:
+            return None
+        return log
+
+    @staticmethod
     def like(chat_log_id):
         log = ChatLog.objects(id=chat_log_id).only("liked").first()
         if log and log.liked:
@@ -49,4 +56,3 @@ class ChatLogRepository:
             history.append({'chat_log_id': chat_log_id, 'role': 'user', 'text': log.user_question, 'created_at': log.created_at})
             history.append({'chat_log_id': chat_log_id, 'role': 'model', 'text': log.chat_api_response, 'created_at': log.created_at})
         return history
-

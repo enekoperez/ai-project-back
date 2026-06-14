@@ -20,6 +20,32 @@ def test_chat_log_repository_create_delegates_to_model(monkeypatch):
     )
 
 
+def test_chat_log_repository_get_chat_log_by_user_id_returns_log_when_owner(monkeypatch):
+    log = Mock(key={"user_id": "user-1"})
+    chat_log_model = Mock()
+    chat_log_model.objects.return_value.only.return_value.first.return_value = log
+    monkeypatch.setattr("webapp.repositories.chat_log_repository.ChatLog", chat_log_model)
+
+    assert ChatLogRepository().get_chat_log_by_user_id(chat_log_id="chat-1", user_id="user-1") is log
+    chat_log_model.objects.return_value.only.assert_called_once_with("key")
+
+
+def test_chat_log_repository_get_chat_log_by_user_id_returns_none_when_wrong_user(monkeypatch):
+    chat_log_model = Mock()
+    chat_log_model.objects.return_value.only.return_value.first.return_value = Mock(key={"user_id": "other-user"})
+    monkeypatch.setattr("webapp.repositories.chat_log_repository.ChatLog", chat_log_model)
+
+    assert ChatLogRepository().get_chat_log_by_user_id(chat_log_id="chat-1", user_id="user-1") is None
+
+
+def test_chat_log_repository_get_chat_log_by_user_id_returns_none_when_not_found(monkeypatch):
+    chat_log_model = Mock()
+    chat_log_model.objects.return_value.only.return_value.first.return_value = None
+    monkeypatch.setattr("webapp.repositories.chat_log_repository.ChatLog", chat_log_model)
+
+    assert ChatLogRepository().get_chat_log_by_user_id(chat_log_id="chat-1", user_id="user-1") is None
+
+
 def test_chat_log_repository_like_sets_liked_and_clears_disliked(monkeypatch):
     chat_log_model = Mock()
     chat_log_model.objects.return_value.only.return_value.first.return_value = Mock(liked=False)
