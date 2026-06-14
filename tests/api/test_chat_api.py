@@ -21,7 +21,7 @@ def test_like_chat_log_returns_feedback_state(monkeypatch):
     service.like.return_value = {"chat_log_id": "chat-1", "liked": True, "disliked": None}
     client = make_client(monkeypatch, service)
 
-    response = client.put("/ai/v1/chat/chat-1/like")
+    response = client.put("/ai/v1/chat/chat-1/like", headers={"User-Id": "user-1"})
 
     assert response.status_code == 200
     assert_success_response(response, {
@@ -29,7 +29,7 @@ def test_like_chat_log_returns_feedback_state(monkeypatch):
         "liked": True,
         "disliked": None,
     })
-    service.like.assert_called_once_with(chat_log_id="chat-1")
+    service.like.assert_called_once_with(chat_log_id="chat-1", user_id="user-1")
 
 
 def test_like_chat_log_returns_422_for_blank_path_id(monkeypatch):
@@ -48,7 +48,7 @@ def test_dislike_chat_log_returns_feedback_state(monkeypatch):
     service.dislike.return_value = {"chat_log_id": "chat-1", "liked": None, "disliked": True}
     client = make_client(monkeypatch, service)
 
-    response = client.put("/ai/v1/chat/chat-1/dislike")
+    response = client.put("/ai/v1/chat/chat-1/dislike", headers={"User-Id": "user-1"})
 
     assert response.status_code == 200
     assert_success_response(response, {
@@ -56,4 +56,4 @@ def test_dislike_chat_log_returns_feedback_state(monkeypatch):
         "liked": None,
         "disliked": True,
     })
-    service.dislike.assert_called_once_with(chat_log_id="chat-1")
+    service.dislike.assert_called_once_with(chat_log_id="chat-1", user_id="user-1")
