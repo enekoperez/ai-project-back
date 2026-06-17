@@ -36,6 +36,7 @@ The application is organized around a small Flask API surface and a service laye
 
 ```text
 rag_docs/          Markdown knowledge sources used for RAG
+evals/             RAG retrieval eval harness (hit@k, MRR, recall@k)
 webapp/
   api/             HTTP blueprints, validation, response formatting
   services/        AI orchestration, RAG, OCR, chat, domain assistants
@@ -53,13 +54,13 @@ Request flow:
 2. Pydantic validation rejects malformed JSON, unknown fields, and missing headers.
 3. The service layer normalizes user input, builds prompts, retrieves history or RAG context, and calls the AI provider abstraction.
 4. Provider responses are saved to MongoDB with timestamps and metadata.
-5. API responses return consistent JSON payloads with IDs, timestamps, model output, cache metadata, or source scores where relevant.
+5. API responses return consistent JSON payloads with IDs, timestamps, model output, cache metadata, or retrieved source names where relevant.
 
 ## Main Features
 
 ### General RAG Chat
 
-`ChatGeneralService` retrieves relevant chunks from the RAG store, injects them into the prompt, and asks Gemini for a grounded answer. Source names and similarity scores are returned with the response so the caller can inspect what context was used.
+`ChatGeneralService` retrieves relevant chunks from the RAG store using hybrid search (dense cosine + BM25, fused server-side by Qdrant Reciprocal Rank Fusion), injects them into the prompt, and asks Gemini for a grounded answer. The source names used for the answer are returned with the response so the caller can inspect what context was used.
 
 RAG indexing is handled by the Flask CLI:
 
@@ -338,13 +339,24 @@ The GitHub Actions pipeline runs:
 - Semgrep security scanning.
 - Dependabot updates for pip, GitHub Actions, and Docker.
 
+### RAG retrieval evals
+
+A small, zero-dependency harness measures retrieval quality against a hand-built golden set, reporting hit@k, MRR, and recall@k at the source-document level:
+
+```bash
+python -m evals.run_rag_eval
+```
+
+It runs against the live Qdrant collection and embedding API, so it is kept separate from the unit test suite (which is fast, deterministic, and free) rather than run on every commit. See [`evals/README.md`](evals/README.md) for the metric definitions and dataset format.
+
 ## Engineering Highlights
 
 - Clear separation between API, services, repositories, models, prompts, and tools.
 - Strict request validation with Pydantic models and forbidden extra fields.
 - Multi-provider AI abstraction with retry handling and provider fallback for non-chat extraction tasks.
 - Gemini tool calling with a backend weather function and bounded tool-hop loop.
-- RAG pipeline with markdown chunking and Qdrant cosine similarity retrieval.
+- RAG pipeline with heading-aware markdown chunking and hybrid retrieval (dense cosine + BM25, fused by Qdrant Reciprocal Rank Fusion).
+- Retrieval eval harness (hit@k, MRR, recall@k) over a golden set, kept separate from the unit tests.
 - MongoDB indexes for chat history and feedback lookup paths.
 - Structured response helpers for consistent API output.
 - Focused tests across API routes, services, repositories, DTOs, models, prompts, tools, and CLI behavior.
