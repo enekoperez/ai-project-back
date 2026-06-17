@@ -1,9 +1,11 @@
+import json
 import re
 import zlib
 from collections import Counter
 
 from loguru import logger
 
+from webapp.prompts import rerank_prompt
 from webapp.repositories.qdrant_repository import QdrantRepository
 from webapp.services.ai_service import AiService
 from webapp.services.doc_service import DocService
@@ -15,6 +17,7 @@ _HEADING_PATTERN = re.compile(r"^(#{1,6})\s+(.+?)\s*$")  # Markdown heading: 1-6
 _TOKEN_PATTERN = re.compile(r"[a-z0-9]+")  # BM25 tokenizer: lowercase alphanumeric runs.
 _CHUNK_OVERLAP_CHARS = round(_MAX_CHUNK_CHARS * 0.15)  # Consecutive chunks repeat this much text so facts on a boundary survive in one piece.
 _TOP_K = 5  # Retrieval size tradeoff: 3 is lean, 5 is better for multi-step help questions, 8 is broader but noisier.
+_RERANK_CANDIDATES = 20  # Wider pool fetched from Qdrant; the reranker reorders it down to _TOP_K.
 _MIN_SCORE = 0.6  # Cosine-similarity floor: 0.5 lenient, 0.6 balanced, 0.7 strict. Chunks below this are dropped.
 
 
@@ -216,10 +219,36 @@ class RagService:
             texts=[self._prepare_query(query=question)],
             dimensions=_EMBEDDING_DIMENSIONS
         )[0]
-        top_chunks = self.qdrant_repository.query_chunks(
+        candidates = self.qdrant_repository.query_chunks(
             embedding=question_embedding,
             sparse=self._sparse_encode(question),
-            limit=_TOP_K,
+            limit=_RERANK_CANDIDATES,
             score_threshold=_MIN_SCORE,
         )
-        return top_chunks
+        return self._rerank(query=question, chunks=candidates)
+
+    def _rerank(self, query, chunks):
+        if len(chunks) <= _TOP_K:  # Nothing to refine — skip the LLM call.
+            return chunks
+
+        # A rerank failure must never break or empty retrieval: fall back to the hybrid order.
+        try:
+            response, *_ = self.ai_service.call_llm(
+                system_prompt=rerank_prompt.build_system_prompt(),
+                user_prompt=rerank_prompt.build_user_prompt(query=query, chunks=chunks),
+                response_format=rerank_prompt.response_format(),
+                is_rag=True,
+                max_output_tokens=200,
+            )
+            indices = json.loads(response)["indices"]
+        except Exception:
+            logger.exception("[rag.rerank] rerank failed; using hybrid order")
+            return chunks[:_TOP_K]
+
+        seen = set()
+        reranked = []
+        for index in indices:
+            if isinstance(index, int) and 0 <= index < len(chunks) and index not in seen:
+                seen.add(index)
+                reranked.append(chunks[index])
+        return reranked[:_TOP_K] or chunks[:_TOP_K]
