@@ -35,6 +35,7 @@ Core capabilities:
 The application is organized around a small Flask API surface and a service layer that owns the AI behavior.
 
 ```text
+rag_docs/          Markdown knowledge sources used for RAG
 webapp/
   api/             HTTP blueprints, validation, response formatting
   services/        AI orchestration, RAG, OCR, chat, domain assistants
@@ -42,7 +43,6 @@ webapp/
   models/          MongoEngine document models
   prompts/         Prompt builders per assistant/task
   tools/           Model-callable tools, such as weather lookup
-  rag_docs/        Markdown knowledge sources used for RAG
   run.py           Flask app factory and runtime entrypoint
   cli.py           Flask CLI commands
 ```

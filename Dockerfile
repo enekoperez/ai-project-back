@@ -11,6 +11,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY webapp /app/webapp
+COPY rag_docs /app/rag_docs
 RUN useradd --create-home appuser && chown -R appuser:appuser /app
 
 EXPOSE 80

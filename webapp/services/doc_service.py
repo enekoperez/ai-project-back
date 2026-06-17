@@ -3,7 +3,7 @@ from pathlib import Path
 
 class DocService:
     def __init__(self, docs_dir=None):
-        self.docs_dir = Path(docs_dir) if docs_dir is not None else Path(__file__).resolve().parents[1] / "rag_docs"
+        self.docs_dir = Path(docs_dir) if docs_dir is not None else Path(__file__).resolve().parents[2] / "rag_docs"
 
     def get_source_files(self):
         if not self.docs_dir.exists():
