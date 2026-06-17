@@ -41,7 +41,7 @@ def test_chat_weather_uses_tools_without_rag_and_separate_history():
         "date_utc_in_millis": BaseService._to_millis(created_at),
         "cache_create_time": None,
         "cache_create_time_utc_in_millis": None,
-        "source_names_and_scores": [],
+        "source_names": [],
     }
     chat_log_repository.get_history.assert_called_once_with(key={"user_id": "user-1", "key_2": "chat_weather"})
     chat_log_repository.create.assert_called_once_with(

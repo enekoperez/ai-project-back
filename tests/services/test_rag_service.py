@@ -184,6 +184,43 @@ def test_get_top_chunks_filters_scores_and_sorts_top_matches():
     )
     qdrant_repository.query_chunks.assert_called_once_with(
         embedding=[1.0, 0.0],
+        sparse=RagService._sparse_encode("What sport?"),
         limit=5,
         score_threshold=0.6,
     )
+
+
+def test_sparse_encode_counts_term_frequencies_with_stable_ids():
+    encoded = RagService._sparse_encode("Offside OFFSIDE rule, rule rule!")
+
+    # Lowercased, tokenized on alphanumeric runs; one index per distinct term, value = count.
+    assert len(encoded["indices"]) == 2
+    assert sorted(encoded["values"]) == [2, 3]
+    assert all(isinstance(index, int) for index in encoded["indices"])
+    # Same term -> same crc32 id across calls (stable, unlike Python's randomized hash),
+    # independent of term order in the source text.
+    other = RagService._sparse_encode("rule rule rule offside offside")
+    assert dict(zip(encoded["indices"], encoded["values"])) == dict(zip(other["indices"], other["values"]))
+
+
+def test_sparse_encode_handles_empty_text():
+    assert RagService._sparse_encode("   !!!  ") == {"indices": [], "values": []}
+
+
+def test_sync_passes_sparse_vector_to_upsert():
+    ai_service = Mock()
+    ai_service.embed.return_value = [[0.1, 0.2]]
+    qdrant_repository = Mock()
+    doc_service = Mock()
+    doc_service.get_source_files.return_value = [{"source_name": "football.md"}]
+    doc_service.get_source_text.return_value = "Offside rule."
+    service = make_service(
+        ai_service=ai_service,
+        qdrant_repository=qdrant_repository,
+        doc_service=doc_service,
+    )
+
+    service.sync()
+
+    sparse = qdrant_repository.upsert_chunk.call_args.kwargs["sparse"]
+    assert sparse == RagService._sparse_encode("Offside rule.")

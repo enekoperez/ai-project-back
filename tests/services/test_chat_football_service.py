@@ -54,7 +54,7 @@ def test_chat_football_uses_chat_without_tools_and_separate_history():
         "date_utc_in_millis": BaseService._to_millis(created_at),
         "cache_create_time": "2026-06-01T12:00:00+00:00",
         "cache_create_time_utc_in_millis": BaseService._to_millis(created_at),
-        "source_names_and_scores": [],
+        "source_names": [],
     }
     chat_log_repository.get_history.assert_called_once_with(key={"user_id": "user-1", "key_2": "chat_football"})
     chat_log_repository.create.assert_called_once_with(

@@ -154,10 +154,42 @@ def _install_qdrant_dependency_stubs():
             self.size = size
             self.distance = distance
 
+    class SparseVectorParams:
+        def __init__(self, modifier=None):
+            self.modifier = modifier
+
+    class SparseVector:
+        def __init__(self, indices, values):
+            self.indices = indices
+            self.values = values
+
+    class Prefetch:
+        def __init__(self, query=None, using=None, limit=None, score_threshold=None):
+            self.query = query
+            self.using = using
+            self.limit = limit
+            self.score_threshold = score_threshold
+
+    class FusionQuery:
+        def __init__(self, fusion=None):
+            self.fusion = fusion
+
+    class _Fusion:
+        RRF = "Rrf"
+
+    class _Modifier:
+        IDF = "Idf"
+
     qdrant_client_module.QdrantClient = QdrantClient
     qdrant_models_module.Distance = _Distance
     qdrant_models_module.PointStruct = PointStruct
     qdrant_models_module.VectorParams = VectorParams
+    qdrant_models_module.SparseVectorParams = SparseVectorParams
+    qdrant_models_module.SparseVector = SparseVector
+    qdrant_models_module.Prefetch = Prefetch
+    qdrant_models_module.FusionQuery = FusionQuery
+    qdrant_models_module.Fusion = _Fusion
+    qdrant_models_module.Modifier = _Modifier
 
     sys.modules.setdefault("qdrant_client", qdrant_client_module)
     sys.modules.setdefault("qdrant_client.models", qdrant_models_module)

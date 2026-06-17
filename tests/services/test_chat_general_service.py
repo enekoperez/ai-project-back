@@ -41,7 +41,7 @@ def test_chat_creates_chat_row_and_calls_ai_service_with_question():
         "date_utc_in_millis": BaseService._to_millis(created_at),
         "cache_create_time": None,
         "cache_create_time_utc_in_millis": None,
-        "source_names_and_scores": [{"source_name": "ocr.md", "score": 0.9}],
+        "source_names": ["ocr.md"],
     }
     chat_log_repository.create.assert_called_once_with(
         key={"user_id": "user-1"},
@@ -85,7 +85,7 @@ def test_chat_allows_missing_created_at():
         "date_utc_in_millis": None,
         "cache_create_time": None,
         "cache_create_time_utc_in_millis": None,
-        "source_names_and_scores": [],
+        "source_names": [],
     }
     chat_log_repository.create.assert_called_once_with(
         key={"user_id": "user-1"},
