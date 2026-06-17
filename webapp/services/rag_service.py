@@ -1,4 +1,6 @@
 import re
+import zlib
+from collections import Counter
 
 from loguru import logger
 
@@ -10,6 +12,7 @@ _EMBEDDING_DIMENSIONS = 768
 _EMBEDDING_BATCH_SIZE = 50
 _MAX_CHUNK_CHARS = 1600  # Text	- Supports up to 8,192 tokens.
 _HEADING_PATTERN = re.compile(r"^(#{1,6})\s+(.+?)\s*$")  # Markdown heading: 1-6 '#' followed by the title.
+_TOKEN_PATTERN = re.compile(r"[a-z0-9]+")  # BM25 tokenizer: lowercase alphanumeric runs.
 _CHUNK_OVERLAP_CHARS = round(_MAX_CHUNK_CHARS * 0.15)  # Consecutive chunks repeat this much text so facts on a boundary survive in one piece.
 _TOP_K = 5  # Retrieval size tradeoff: 3 is lean, 5 is better for multi-step help questions, 8 is broader but noisier.
 _MIN_SCORE = 0.6  # Cosine-similarity floor: 0.5 lenient, 0.6 balanced, 0.7 strict. Chunks below this are dropped.
@@ -71,10 +74,21 @@ class RagService:
                 chunk_index=chunk["chunk_index"],
                 text=chunk["text"],
                 embedding=embedding,
+                sparse=self._sparse_encode(chunk["text"]),
             )
 
         logger.info("[rag.sync] end")
         return True
+
+    @staticmethod
+    def _sparse_encode(text):
+        """Builds a BM25 term-frequency sparse vector; Qdrant applies IDF server-side.
+
+        Token ids use crc32 (stable across runs, unlike Python's randomized hash) so a term
+        maps to the same index at indexing and query time.
+        """
+        counts = Counter(zlib.crc32(token.encode("utf-8")) for token in _TOKEN_PATTERN.findall(text.lower()))
+        return {"indices": list(counts.keys()), "values": list(counts.values())}
 
     @staticmethod
     def _batch(items, size):
@@ -204,6 +218,7 @@ class RagService:
         )[0]
         top_chunks = self.qdrant_repository.query_chunks(
             embedding=question_embedding,
+            sparse=self._sparse_encode(question),
             limit=_TOP_K,
             score_threshold=_MIN_SCORE,
         )

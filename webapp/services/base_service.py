@@ -85,15 +85,17 @@ class BaseService:
             "chat_api_response": self._try_json_loads(chat_api_response),
             "date": self._to_iso(chat_log.created_at),
             "date_utc_in_millis": self._to_millis(chat_log.created_at),
-            "source_names_and_scores": [],
+            "source_names": [],
+            # "source_names_and_scores": [],  # scores are Qdrant RRF ranks (not cosine/confidence); hidden to avoid misreads
             **self._cache_create_time_response(cache_create_time=cache_create_time),
         }
         if top_chunks:
             response.update({
-                "source_names_and_scores": [
-                    {"source_name": c["source_name"], "score": round(c["score"], 3)}
-                    for c in top_chunks
-                ],
+                "source_names": [c["source_name"] for c in top_chunks],
+                # "source_names_and_scores": [
+                #     {"source_name": c["source_name"], "score": round(c["score"], 3)}
+                #     for c in top_chunks
+                # ],
             })
         return response
 

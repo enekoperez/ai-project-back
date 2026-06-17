@@ -1,9 +1,22 @@
 import uuid
 
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, PointStruct, VectorParams
+from qdrant_client.models import (
+    Distance,
+    Fusion,
+    FusionQuery,
+    Modifier,
+    PointStruct,
+    Prefetch,
+    SparseVector,
+    SparseVectorParams,
+    VectorParams,
+)
 
 from webapp import config
+
+_DENSE = "dense"
+_BM25 = "bm25"
 
 
 class QdrantRepository:
@@ -17,10 +30,12 @@ class QdrantRepository:
             self.client.delete_collection(collection_name=self.collection_name)
         self.client.create_collection(
             collection_name=self.collection_name,
-            vectors_config=VectorParams(size=vector_size, distance=Distance.COSINE),
+            vectors_config={_DENSE: VectorParams(size=vector_size, distance=Distance.COSINE)},
+            # Qdrant computes IDF server-side, so we only send raw term-frequency sparse vectors.
+            sparse_vectors_config={_BM25: SparseVectorParams(modifier=Modifier.IDF)},
         )
 
-    def upsert_chunk(self, source_name, chunk_index, text, embedding):
+    def upsert_chunk(self, source_name, chunk_index, text, embedding, sparse):
         point_id = str(uuid.uuid5(
             uuid.NAMESPACE_URL,
             f"{source_name}:{chunk_index}",
@@ -31,7 +46,10 @@ class QdrantRepository:
             points=[
                 PointStruct(
                     id=point_id,
-                    vector=embedding,
+                    vector={
+                        _DENSE: embedding,
+                        _BM25: SparseVector(indices=sparse["indices"], values=sparse["values"]),
+                    },
                     payload={
                         "source_name": source_name,
                         "text": text,
@@ -40,12 +58,21 @@ class QdrantRepository:
             ],
         )
 
-    def query_chunks(self, embedding, limit, score_threshold):
+    def query_chunks(self, embedding, sparse, limit, score_threshold):
+        # Hybrid search: dense cosine + BM25 sparse, fused server-side by Reciprocal Rank Fusion.
+        # The cosine floor gates the dense branch only; BM25 contributes lexical hits unfiltered.
         result = self.client.query_points(
             collection_name=self.collection_name,
-            query=embedding,
+            prefetch=[
+                Prefetch(query=embedding, using=_DENSE, limit=limit, score_threshold=score_threshold),
+                Prefetch(
+                    query=SparseVector(indices=sparse["indices"], values=sparse["values"]),
+                    using=_BM25,
+                    limit=limit,
+                ),
+            ],
+            query=FusionQuery(fusion=Fusion.RRF),
             limit=limit,
-            score_threshold=score_threshold,
         )
         points = result.points if hasattr(result, "points") else result
         chunks = []

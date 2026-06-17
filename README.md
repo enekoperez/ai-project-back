@@ -228,7 +228,7 @@ Copy `.env.example` to `.env` and fill in the provider keys.
 FLASK_DEBUG=false
 AI_DB_CONNECTION_STRING=mongodb://localhost:27017/ai_db
 QDRANT_URL=http://127.0.0.1:6333
-QDRANT_COLLECTION_NAME=rag_chunks
+QDRANT_COLLECTION_NAME=rag_chunks_hybrid
 MISTRAL_API_KEY=api-key-needed
 GOOGLE_AI_API_KEY=api-key-needed
 OPENAI_API_KEY=api-key-needed
