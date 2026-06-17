@@ -1,0 +1,66 @@
+[
+  {
+    "question": "How many players are on a volleyball team?",
+    "expected_sources": ["volleyball.md"]
+  },
+  {
+    "question": "What is the offside rule?",
+    "expected_sources": ["football.md", "rugby.md", "ice_hockey.md"]
+  },
+  {
+    "question": "What is a libero in volleyball?",
+    "expected_sources": ["volleyball.md"]
+  },
+  {
+    "question": "What does deuce mean in tennis?",
+    "expected_sources": ["tennis.md"]
+  },
+  {
+    "question": "How many deliveries are there in a cricket over?",
+    "expected_sources": ["cricket.md"]
+  },
+  {
+    "question": "How long can a Test cricket match last?",
+    "expected_sources": ["cricket.md"]
+  },
+  {
+    "question": "How many players are on a football team?",
+    "expected_sources": ["football.md"]
+  },
+  {
+    "question": "How many points are needed to win a volleyball set?",
+    "expected_sources": ["volleyball.md"]
+  },
+  {
+    "question": "What is a double fault in tennis?",
+    "expected_sources": ["tennis.md"]
+  },
+  {
+    "question": "How does scoring work in basketball?",
+    "expected_sources": ["basketball.md"]
+  },
+  {
+    "question": "What are the basic rules of handball?",
+    "expected_sources": ["handball.md"]
+  },
+  {
+    "question": "How are swimming competitions structured?",
+    "expected_sources": ["swimming.md"]
+  },
+  {
+    "question": "What penalties exist in ice hockey?",
+    "expected_sources": ["ice_hockey.md"]
+  },
+  {
+    "question": "How are runs scored in baseball?",
+    "expected_sources": ["baseball.md"]
+  },
+  {
+    "question": "How many sports do you know?",
+    "expected_sources": ["overview.md"]
+  },
+  {
+    "question": "What sports can I ask you about?",
+    "expected_sources": ["overview.md"]
+  }
+]
