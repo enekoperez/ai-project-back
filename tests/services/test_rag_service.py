@@ -250,7 +250,21 @@ def test_rerank_falls_back_when_all_indices_invalid():
 
     result = service._rerank(query="What sport?", chunks=candidates)
 
+    # No usable indices -> backfill restores the full hybrid order, capped at _TOP_K.
     assert result == candidates[:5]
+
+
+def test_rerank_backfills_dropped_candidates_to_top_k():
+    ai_service = Mock()
+    # The LLM keeps only two passages and drops the rest. Reranking must not shrink recall:
+    # the dropped candidates are backfilled in hybrid order so we still return _TOP_K (5).
+    ai_service.call_llm.return_value = ('{"indices": [2, 0]}', "model")
+    service = make_service(ai_service=ai_service)
+    candidates = _make_candidates(7)
+
+    result = service._rerank(query="What sport?", chunks=candidates)
+
+    assert result == [candidates[2], candidates[0], candidates[1], candidates[3], candidates[4]]
 
 
 def test_sparse_encode_handles_empty_text():

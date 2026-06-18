@@ -341,7 +341,7 @@ The GitHub Actions pipeline runs:
 
 ### RAG retrieval evals
 
-A small, zero-dependency harness measures retrieval quality against a hand-built golden set, reporting hit@k, MRR, and recall@k at the source-document level:
+A small, zero-dependency harness measures retrieval quality against a hand-built golden set, reporting hit@k, MRR, and recall@k at the source-document level for positive cases, plus abstention accuracy on off-topic questions that should return nothing:
 
 ```bash
 python -m evals.run_rag_eval
@@ -355,8 +355,8 @@ It runs against the live Qdrant collection and embedding API, so it is kept sepa
 - Strict request validation with Pydantic models and forbidden extra fields.
 - Multi-provider AI abstraction with retry handling and provider fallback for non-chat extraction tasks.
 - Gemini tool calling with a backend weather function and bounded tool-hop loop.
-- RAG pipeline with heading-aware markdown chunking and hybrid retrieval (dense cosine + BM25, fused by Qdrant Reciprocal Rank Fusion).
-- Retrieval eval harness (hit@k, MRR, recall@k) over a golden set, kept separate from the unit tests.
+- RAG pipeline with heading-aware markdown chunking, hybrid retrieval (dense cosine + BM25, fused by Qdrant Reciprocal Rank Fusion), and an LLM reranker that reorders without shrinking recall.
+- Retrieval eval harness (hit@k, MRR, recall@k, plus abstention) over a golden set, kept separate from the unit tests.
 - MongoDB indexes for chat history and feedback lookup paths.
 - Structured response helpers for consistent API output.
 - Focused tests across API routes, services, repositories, DTOs, models, prompts, tools, and CLI behavior.

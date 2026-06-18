@@ -62,5 +62,43 @@
   {
     "question": "What sports can I ask you about?",
     "expected_sources": ["overview.md"]
+  },
+
+  {
+    "_note": "Rare/exact-token cases: terms that appear in exactly one doc, where lexical (BM25) matching earns its keep over pure semantics.",
+    "question": "What is leg before wicket?",
+    "expected_sources": ["cricket.md"]
+  },
+  {
+    "question": "What is a scrum?",
+    "expected_sources": ["rugby.md"]
+  },
+  {
+    "question": "What is icing in ice hockey?",
+    "expected_sources": ["ice_hockey.md"]
+  },
+  {
+    "question": "What is a power play?",
+    "expected_sources": ["ice_hockey.md"]
+  },
+
+  {
+    "_note": "Distractor/precision case: 'points' appears across many docs, but 'try' is rugby-specific — rewards ranking the right doc first.",
+    "question": "How many points is a try worth?",
+    "expected_sources": ["rugby.md"]
+  },
+
+  {
+    "_note": "Negative/abstention cases: no doc answers these, so the trustable behaviour is to return nothing. Scored separately as abstention accuracy.",
+    "question": "What is the capital of France?",
+    "expected_sources": []
+  },
+  {
+    "question": "How do I bake sourdough bread?",
+    "expected_sources": []
+  },
+  {
+    "question": "What is the chemical symbol for gold?",
+    "expected_sources": []
   }
 ]

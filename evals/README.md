@@ -18,25 +18,51 @@ python -m evals.run_rag_eval
 python -m evals.run_rag_eval --min-hit 0.8   # exit non-zero below threshold (CI)
 ```
 
-Each run makes one embedding API call per question (~16 cheap calls).
+Each run makes one embedding API call per question (~24 cheap calls), plus a reranker
+LLM call for any question whose hybrid search returns more than `_TOP_K` candidates.
 
 ## Files
 
-- `rag_eval_dataset.json` — the golden set: `{"question", "expected_sources"}` pairs.
+- `rag_eval_dataset.json` — the golden set: `{"question", "expected_sources"}` pairs
+  (optional `_note` keys group related cases and are ignored by the runner).
   `expected_sources` is the set of acceptable source files; a hit means **any** one of
-  them was retrieved. Edit/extend this as docs grow.
+  them was retrieved. The set deliberately mixes case types so the harness can actually
+  *discriminate* retrieval designs, not just rubber-stamp easy lookups:
+  - **single-doc** — straightforward keyword lookups.
+  - **rare/exact-token** (e.g. "leg before wicket", "scrum", "icing") — terms in exactly
+    one doc, where lexical BM25 matching earns its keep over pure semantics.
+  - **distractor/precision** (e.g. "How many points is a try worth?") — wording overlaps
+    many docs but only one is correct; rewards ranking the right doc first.
+  - **multi-source** (e.g. "offside rule") — several docs are acceptable; tests recall.
+  - **negative/abstention** (`expected_sources: []`) — off-topic questions that should
+    return nothing.
+  Edit/extend this as docs grow.
 - `run_rag_eval.py` — the runner (Python stdlib only).
 
 ## Metrics
 
 Computed at the **source-document** level (retrieved chunks are deduped to source names,
-preserving rank), where `k = _TOP_K` from `webapp/services/rag_service.py`:
+preserving rank), where `k = _TOP_K` from `webapp/services/rag_service.py`. Positive and
+negative cases are scored and reported separately:
+
+Positive cases (a doc *should* come back):
 
 - **hit@k** — was at least one expected source in the top-k? (the headline number)
 - **MRR** — mean reciprocal rank: `1 / rank` of the first expected source (rewards
   ranking the right doc higher).
 - **recall@k** — fraction of expected sources retrieved (matters for multi-source
   questions like "offside").
+
+Negative cases (nothing should come back):
+
+- **abstention** — how many off-topic questions correctly returned nothing.
+
+> **Known gap (under review):** abstention is currently imperfect — questions that share
+> incidental tokens with the corpus (e.g. "capital of **France**", "chemical symbol for
+> **gold**") leak chunks, because the BM25 branch in `query_chunks` runs without a score
+> floor. Truly unrelated queries ("bake sourdough bread") correctly return nothing. This
+> is surfaced by the eval on purpose; tightening retrieval to abstain reliably is a
+> separate change with its own behaviour trade-offs.
 
 ## Why no dependencies?
 

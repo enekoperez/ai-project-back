@@ -2,7 +2,9 @@
 
 Runs each golden question through ``RagService.get_top_chunks()`` against the live
 Qdrant collection + embedding API, then reports hit@k, MRR, and recall@k at the
-source-document level. Retrieval quality only — answer text is not judged.
+source-document level for positive cases, plus abstention accuracy for negative
+cases (off-topic questions that should return nothing). Retrieval quality only —
+answer text is not judged.
 
 Usage (from the repo root, so ``webapp`` is importable):
     python -m evals.run_rag_eval
@@ -46,36 +48,55 @@ def _score(ranked_sources, expected_sources, top_k):
 
 
 def evaluate(dataset, service, top_k):
-    results = []
+    """Split the dataset into positive (a doc should be retrieved) and negative
+    (nothing should be retrieved — abstention) cases, scoring each appropriately."""
+    positives, negatives = [], []
     for item in dataset:
         ranked = _ranked_sources(service.get_top_chunks(question=item["question"]))
-        hit, reciprocal_rank, recall = _score(ranked, item["expected_sources"], top_k)
-        results.append({
-            "question": item["question"],
-            "expected": item["expected_sources"],
-            "retrieved": ranked[:top_k],
-            "hit": hit,
-            "rr": reciprocal_rank,
-            "recall": recall,
-        })
-    return results
+        if item["expected_sources"]:
+            hit, reciprocal_rank, recall = _score(ranked, item["expected_sources"], top_k)
+            positives.append({
+                "question": item["question"],
+                "expected": item["expected_sources"],
+                "retrieved": ranked[:top_k],
+                "hit": hit,
+                "rr": reciprocal_rank,
+                "recall": recall,
+            })
+        else:
+            negatives.append({
+                "question": item["question"],
+                "retrieved": ranked[:top_k],
+                "abstained": len(ranked) == 0,
+            })
+    return positives, negatives
 
 
 def _mean(values):
     return sum(values) / len(values) if values else 0.0
 
 
-def print_report(results, top_k):
-    print(f"\nRAG retrieval eval - {len(results)} questions, k={top_k}\n")
-    for result in results:
+def print_report(positives, negatives, top_k):
+    print(f"\nRAG retrieval eval - {len(positives)} positive + {len(negatives)} negative, k={top_k}\n")
+    for result in positives:
         mark = "PASS" if result["hit"] else "FAIL"
         print(f"[{mark}] rr={result['rr']:.2f} recall={result['recall']:.2f} | {result['question']}")
         print(f"        expected={result['expected']} retrieved={result['retrieved']}")
 
-    print("\n--- aggregate ---")
-    print(f"hit@{top_k}:    {_mean([r['hit'] for r in results]):.3f}")
-    print(f"MRR:       {_mean([r['rr'] for r in results]):.3f}")
-    print(f"recall@{top_k}: {_mean([r['recall'] for r in results]):.3f}")
+    print(f"\n--- retrieval (positives) ---")
+    print(f"hit@{top_k}:    {_mean([r['hit'] for r in positives]):.3f}")
+    print(f"MRR:       {_mean([r['rr'] for r in positives]):.3f}")
+    print(f"recall@{top_k}: {_mean([r['recall'] for r in positives]):.3f}")
+
+    if negatives:
+        correct = sum(n["abstained"] for n in negatives)
+        print(f"\n--- abstention (negatives: should return nothing) ---")
+        print(f"abstention: {correct}/{len(negatives)} correct")
+        for n in negatives:
+            mark = "OK  " if n["abstained"] else "LEAK"
+            print(f"[{mark}] {n['question']}")
+            if not n["abstained"]:
+                print(f"        retrieved={n['retrieved']}")
 
 
 def main(argv=None):
@@ -84,16 +105,16 @@ def main(argv=None):
         "--min-hit",
         type=float,
         default=None,
-        help=f"Exit non-zero if mean hit@{_TOP_K} is below this threshold (for CI).",
+        help=f"Exit non-zero if mean hit@{_TOP_K} over positive cases is below this threshold (for CI).",
     )
     args = parser.parse_args(argv)
 
     dataset = json.loads(_DATASET_PATH.read_text(encoding="utf-8"))
-    results = evaluate(dataset, RagService(), _TOP_K)
-    print_report(results, _TOP_K)
+    positives, negatives = evaluate(dataset, RagService(), _TOP_K)
+    print_report(positives, negatives, _TOP_K)
 
     if args.min_hit is not None:
-        mean_hit = _mean([r["hit"] for r in results])
+        mean_hit = _mean([r["hit"] for r in positives])
         if mean_hit < args.min_hit:
             print(f"\nFAILED threshold: hit@{_TOP_K}={mean_hit:.3f} < {args.min_hit}")
             return 1
