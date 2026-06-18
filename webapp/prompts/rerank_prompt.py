@@ -5,9 +5,8 @@ def build_system_prompt() -> str:
         "</role>\n"
 
         "\n<rules>\n"
-        "- Given a query and numbered candidate passages, judge which passages actually answer the query.\n"
-        "- Return the candidate indices ordered from most to least relevant.\n"
-        "- Include only genuinely relevant passages; drop unrelated ones.\n"
+        "- Given a query and numbered candidate passages, judge how well each passage answers the query.\n"
+        "- Return all candidate indices ordered from most to least relevant; do not omit any.\n"
         "</rules>\n"
 
         "\n<format>\n"

@@ -257,7 +257,8 @@ class RagService:
             if isinstance(index, int) and 0 <= index < len(chunks) and index not in seen:
                 seen.add(index)
                 reranked.append(chunks[index])
-        # Reranking may only reorder, never shrink recall: backfill any candidates the LLM
-        # dropped, in their original hybrid order, so we always return the full top _TOP_K.
+        # Reranking may only reorder, never shrink recall. The prompt asks the LLM to rank all
+        # candidates and omit none, so this backfill is a safety net: if the LLM drops some
+        # anyway, re-add them in hybrid order so we still return the full top _TOP_K.
         reranked.extend(chunk for index, chunk in enumerate(chunks) if index not in seen)
         return reranked[:_TOP_K]

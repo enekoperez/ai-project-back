@@ -6,7 +6,7 @@ def test_build_system_prompt_describes_reranker_role():
 
     assert "reranker" in prompt
     assert "most to least relevant" in prompt
-    assert "drop unrelated" in prompt
+    assert "do not omit any" in prompt  # ordering-only: code backfills, so the reranker must rank all, not drop
     assert '{"indices": [<int>, ...]}' in prompt
     assert "todo:" not in prompt
 
