@@ -1,5 +1,6 @@
 from unittest.mock import Mock
 
+from webapp.prompts import rerank_prompt
 from webapp.services.rag_service import RagService
 
 
@@ -185,7 +186,7 @@ def test_get_top_chunks_filters_scores_and_sorts_top_matches():
     qdrant_repository.query_chunks.assert_called_once_with(
         embedding=[1.0, 0.0],
         sparse=RagService._sparse_encode("What sport?"),
-        limit=5,
+        limit=20,
         score_threshold=0.6,
     )
 
@@ -201,6 +202,55 @@ def test_sparse_encode_counts_term_frequencies_with_stable_ids():
     # independent of term order in the source text.
     other = RagService._sparse_encode("rule rule rule offside offside")
     assert dict(zip(encoded["indices"], encoded["values"])) == dict(zip(other["indices"], other["values"]))
+
+
+def _make_candidates(count):
+    return [
+        {"source_name": f"doc{index}.md", "text": f"Chunk {index}", "score": 1.0 - index * 0.05}
+        for index in range(count)
+    ]
+
+
+def test_rerank_reorders_dedupes_filters_and_truncates_to_top_k():
+    ai_service = Mock()
+    # Valid order after dedup ("6" twice), dropping out-of-range (99) and non-int ("x"):
+    # 6, 5, 4, 3, 2, 1 -> truncated to _TOP_K (5) -> 6, 5, 4, 3, 2.
+    ai_service.call_llm.return_value = ('{"indices": [6, 5, 6, 99, "x", 4, 3, 2, 1]}', "model")
+    service = make_service(ai_service=ai_service)
+    candidates = _make_candidates(7)
+
+    result = service._rerank(query="What sport?", chunks=candidates)
+
+    assert result == [candidates[6], candidates[5], candidates[4], candidates[3], candidates[2]]
+    ai_service.call_llm.assert_called_once_with(
+        system_prompt=rerank_prompt.build_system_prompt(),
+        user_prompt=rerank_prompt.build_user_prompt(query="What sport?", chunks=candidates),
+        response_format=rerank_prompt.response_format(),
+        is_rag=True,
+        max_output_tokens=200,
+    )
+
+
+def test_rerank_falls_back_to_hybrid_order_on_llm_failure():
+    ai_service = Mock()
+    ai_service.call_llm.side_effect = RuntimeError("LLM down")
+    service = make_service(ai_service=ai_service)
+    candidates = _make_candidates(7)
+
+    result = service._rerank(query="What sport?", chunks=candidates)
+
+    assert result == candidates[:5]
+
+
+def test_rerank_falls_back_when_all_indices_invalid():
+    ai_service = Mock()
+    ai_service.call_llm.return_value = ('{"indices": [99, 100, 101]}', "model")
+    service = make_service(ai_service=ai_service)
+    candidates = _make_candidates(7)
+
+    result = service._rerank(query="What sport?", chunks=candidates)
+
+    assert result == candidates[:5]
 
 
 def test_sparse_encode_handles_empty_text():
