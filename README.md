@@ -355,7 +355,7 @@ It runs against the live Qdrant collection and embedding API, so it is kept sepa
 - Strict request validation with Pydantic models and forbidden extra fields.
 - Multi-provider AI abstraction with retry handling and provider fallback for non-chat extraction tasks.
 - Gemini tool calling with a backend weather function and bounded tool-hop loop.
-- RAG pipeline with heading-aware markdown chunking, hybrid retrieval (dense cosine + BM25, fused by Qdrant Reciprocal Rank Fusion), and an LLM reranker that reorders without shrinking recall.
+- RAG pipeline with heading-aware markdown chunking, hybrid retrieval (dense cosine + BM25, fused by Qdrant Reciprocal Rank Fusion), an LLM reranker that reorders without shrinking recall, and a semantic-relevance gate that abstains when nothing clears the cosine floor (instead of answering off-topic questions from keyword overlap).
 - Retrieval eval harness (hit@k, MRR, recall@k, plus abstention) over a golden set, kept separate from the unit tests.
 - MongoDB indexes for chat history and feedback lookup paths.
 - Structured response helpers for consistent API output.

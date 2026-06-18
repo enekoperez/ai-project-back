@@ -73,6 +73,31 @@ def test_upsert_chunk_uses_stable_id_for_same_source_and_index():
     assert first_id == second_id
 
 
+def test_has_dense_match_returns_true_when_a_chunk_clears_the_floor():
+    client = Mock()
+    client.query_points.return_value = SimpleNamespace(points=[
+        SimpleNamespace(payload={"source_name": "football.md", "text": "Football text"}, score=0.7),
+    ])
+    repository = QdrantRepository(client=client, collection_name="rag_chunks")
+
+    assert repository.has_dense_match(embedding=[0.1, 0.2], score_threshold=0.6) is True
+    kwargs = client.query_points.call_args.kwargs
+    assert kwargs["collection_name"] == "rag_chunks"
+    assert kwargs["query"] == [0.1, 0.2]
+    assert kwargs["using"] == "dense"
+    assert kwargs["limit"] == 1
+    assert kwargs["score_threshold"] == 0.6
+
+
+def test_has_dense_match_returns_false_when_nothing_clears_the_floor():
+    client = Mock()
+    # Bare list (no .points wrapper), empty -> nothing relevant -> abstain.
+    client.query_points.return_value = []
+    repository = QdrantRepository(client=client, collection_name="rag_chunks")
+
+    assert repository.has_dense_match(embedding=[0.1, 0.2], score_threshold=0.6) is False
+
+
 def test_query_chunks_runs_hybrid_prefetch_with_rrf_fusion():
     client = Mock()
     client.query_points.return_value = SimpleNamespace(points=[

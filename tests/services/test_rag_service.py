@@ -169,6 +169,7 @@ def test_get_top_chunks_filters_scores_and_sorts_top_matches():
     ai_service = Mock()
     ai_service.embed.return_value = [[1.0, 0.0]]
     qdrant_repository = Mock()
+    qdrant_repository.has_dense_match.return_value = True
     qdrant_repository.query_chunks.return_value = [
         {"source_name": "best.md", "text": "Best", "score": 1.0},
         {"source_name": "middle.md", "text": "Middle", "score": 0.8},
@@ -183,12 +184,28 @@ def test_get_top_chunks_filters_scores_and_sorts_top_matches():
         texts=["task: question answering | query: What sport?"],
         dimensions=768,
     )
+    qdrant_repository.has_dense_match.assert_called_once_with(
+        embedding=[1.0, 0.0],
+        score_threshold=0.6,
+    )
     qdrant_repository.query_chunks.assert_called_once_with(
         embedding=[1.0, 0.0],
         sparse=RagService._sparse_encode("What sport?"),
         limit=20,
         score_threshold=0.6,
     )
+
+
+def test_get_top_chunks_abstains_when_no_dense_match():
+    ai_service = Mock()
+    ai_service.embed.return_value = [[1.0, 0.0]]
+    qdrant_repository = Mock()
+    qdrant_repository.has_dense_match.return_value = False
+    service = make_service(ai_service=ai_service, qdrant_repository=qdrant_repository)
+
+    # No chunk clears the cosine floor -> abstain rather than answer from BM25 leakage.
+    assert service.get_top_chunks(question="What is the capital of France?") == []
+    qdrant_repository.query_chunks.assert_not_called()
 
 
 def test_sparse_encode_counts_term_frequencies_with_stable_ids():

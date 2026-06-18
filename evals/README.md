@@ -57,12 +57,13 @@ Negative cases (nothing should come back):
 
 - **abstention** — how many off-topic questions correctly returned nothing.
 
-> **Known gap (under review):** abstention is currently imperfect — questions that share
-> incidental tokens with the corpus (e.g. "capital of **France**", "chemical symbol for
-> **gold**") leak chunks, because the BM25 branch in `query_chunks` runs without a score
-> floor. Truly unrelated queries ("bake sourdough bread") correctly return nothing. This
-> is surfaced by the eval on purpose; tightening retrieval to abstain reliably is a
-> separate change with its own behaviour trade-offs.
+> **Abstention gate:** retrieval answers only when at least one chunk clears the cosine
+> floor (`_MIN_SCORE`). Off-topic questions that merely share an incidental token with the
+> corpus (e.g. "capital of **France**", "chemical symbol for **gold**") no longer leak —
+> the dense branch finds nothing relevant, so `get_top_chunks` returns nothing instead of
+> answering from BM25 keyword overlap. Trade-off: a query that is a *purely lexical* match
+> (the embedding misses it but BM25 would hit) also abstains; that is the intended
+> default for a trust-first system, tunable via `_MIN_SCORE`.
 
 ## Why no dependencies?
 

@@ -219,6 +219,12 @@ class RagService:
             texts=[self._prepare_query(query=question)],
             dimensions=_EMBEDDING_DIMENSIONS
         )[0]
+        # Semantic abstention gate: if nothing clears the cosine floor, no document is
+        # genuinely relevant — don't answer from incidental BM25 keyword overlap. Abstain.
+        if not self.qdrant_repository.has_dense_match(
+            embedding=question_embedding, score_threshold=_MIN_SCORE
+        ):
+            return []
         candidates = self.qdrant_repository.query_chunks(
             embedding=question_embedding,
             sparse=self._sparse_encode(question),

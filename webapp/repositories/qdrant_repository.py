@@ -58,6 +58,18 @@ class QdrantRepository:
             ],
         )
 
+    def has_dense_match(self, embedding, score_threshold):
+        """True if any chunk clears the cosine floor — the semantic-relevance gate for abstention."""
+        result = self.client.query_points(
+            collection_name=self.collection_name,
+            query=embedding,
+            using=_DENSE,
+            limit=1,
+            score_threshold=score_threshold,
+        )
+        points = result.points if hasattr(result, "points") else result
+        return bool(points)
+
     def query_chunks(self, embedding, sparse, limit, score_threshold):
         # Hybrid search: dense cosine + BM25 sparse, fused server-side by Reciprocal Rank Fusion.
         # The cosine floor gates the dense branch only; BM25 contributes lexical hits unfiltered.
