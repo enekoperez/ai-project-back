@@ -22,7 +22,9 @@ def build_user_prompt(chunks: list, question: str) -> str:
     context_parts = []
     for chunk in chunks:
         context_parts.append(
-            f"<chunk source_name=\"{chunk['source_name']}\" score=\"{chunk['score']:.4f}\">\n"
+            # score is Qdrant's RRF rank (not cosine/confidence); omitted so it can't skew the model's trust in a chunk
+            # f"<chunk source_name=\"{chunk['source_name']}\" score=\"{chunk['score']:.4f}\">\n"
+            f"<chunk source_name=\"{chunk['source_name']}\">\n"
             f"{chunk['text']}\n"
             f"</chunk>"
         )

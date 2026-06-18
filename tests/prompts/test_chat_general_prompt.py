@@ -23,6 +23,6 @@ def test_build_user_prompt_includes_chunks_and_question():
     )
 
     assert "<help_context>" in prompt
-    assert '<chunk source_name="football.md" score="0.8765">' in prompt
+    assert '<chunk source_name="football.md">' in prompt
     assert "Football teams have eleven players." in prompt
     assert "Question: How many players are on a football team?" in prompt
