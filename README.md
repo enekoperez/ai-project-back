@@ -16,6 +16,7 @@ Core capabilities:
 - OCR/question extraction over remote PDF files with structured JSON output.
 - Chat history persisted in MongoDB and replayed into future conversations.
 - Like/dislike feedback endpoints for assistant responses.
+- Built-in web chat UI, served by Flask, for trying the RAG assistant in a browser.
 - Dockerized production runtime with Gunicorn and gevent.
 - CI for linting, tests, coverage, Docker image validation, dependency updates, and security scanning.
 
@@ -26,7 +27,8 @@ Core capabilities:
 - Qdrant for local vector search
 - Pydantic request validation
 - Google Gemini, Mistral, and OpenAI provider integrations
-- LangChain-related dependencies for AI workflows
+- LangChain, langchain-google-genai, and DeepAgents for agent workflows
+- Loguru for structured logging
 - pytest, pytest-cov, Ruff
 - Docker, GitHub Actions, Semgrep, Dependabot
 
@@ -39,11 +41,15 @@ rag_docs/          Markdown knowledge sources used for RAG
 evals/             RAG retrieval eval harness (hit@k, MRR, recall@k)
 webapp/
   api/             HTTP blueprints, validation, response formatting
+  routes/          Route/blueprint registration and error handlers
   services/        AI orchestration, RAG, OCR, chat, domain assistants
   repositories/    MongoDB and Qdrant persistence access
   models/          MongoEngine document models
+  dto/             DTO serializers for API responses
   prompts/         Prompt builders per assistant/task
   tools/           Model-callable tools, such as weather lookup
+  static/          Web chat UI (index.html) served at /ui
+  config.py        Environment-driven configuration
   run.py           Flask app factory and runtime entrypoint
   cli.py           Flask CLI commands
 ```
@@ -70,6 +76,10 @@ flask --app webapp.run rag-sync
 
 The sync process reads local markdown docs, chunks and embeds them, and rebuilds the Qdrant vector collection. Qdrant stores only the source name and chunk text as payload, while MongoDB remains responsible for app data such as chat history and feedback.
 
+### Web Chat UI
+
+A single static page (`webapp/static/index.html`, vanilla JS with light/dark themes) is served by Flask at `GET /ui`. It provides a browser chat interface over the general RAG assistant: it keeps message history, sends questions to `POST /ai/v1/chat/general/` with a `User-Id` header, and offers thumbs-up/down feedback on each answer.
+
 ### Football Assistant
 
 The football assistant uses a dedicated prompt and football knowledge source. It also uses Gemini cached content so repeated user interactions can reuse the same domain context.
@@ -92,11 +102,23 @@ Chat logs are persisted with user questions, model responses, timestamps, and fe
 
 All chat endpoints that depend on user history expect a `User-Id` header.
 
+Request bodies are capped at 1 MB; larger payloads are rejected with HTTP 413.
+
 ### Health Check
 
 ```http
 GET /
 ```
+
+Returns `{"success": true, "data": {"status": "OK"}}`.
+
+### Web UI
+
+```http
+GET /ui
+```
+
+Serves the browser chat interface backed by the general RAG assistant.
 
 ### General RAG Chat
 
@@ -189,6 +211,8 @@ Content-Type: application/json
   "questions": ["invoice number", "total amount", "due date"]
 }
 ```
+
+The `questions` list must contain between 1 and 10 entries.
 
 ### LangChain Agent Experiments
 
@@ -352,8 +376,9 @@ It runs against the live Qdrant collection and embedding API, so it is kept sepa
 ## Engineering Highlights
 
 - Clear separation between API, services, repositories, models, prompts, and tools.
-- Strict request validation with Pydantic models and forbidden extra fields.
-- Multi-provider AI abstraction with retry handling and provider fallback for non-chat extraction tasks.
+- Strict request validation with Pydantic models and forbidden extra fields, a 1 MB request-body cap (HTTP 413), and bounded inputs such as the 1-10 OCR question list.
+- Multi-provider AI abstraction with retry handling and provider fallback for non-chat extraction tasks, with provider clients built lazily so app startup stays fast.
+- Built-in web chat UI served from the same Flask app at `/ui`.
 - Gemini tool calling with a backend weather function and bounded tool-hop loop.
 - RAG pipeline with heading-aware markdown chunking, hybrid retrieval (dense cosine + BM25, fused by Qdrant Reciprocal Rank Fusion), an LLM reranker that reorders without shrinking recall, and a semantic-relevance gate that abstains when nothing clears the cosine floor (instead of answering off-topic questions from keyword overlap).
 - Retrieval eval harness (hit@k, MRR, recall@k, plus abstention) over a golden set, kept separate from the unit tests.
