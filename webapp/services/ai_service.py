@@ -1,4 +1,5 @@
 import time
+from functools import cached_property
 
 from google import genai
 from google.genai import errors as genai_errors
@@ -45,9 +46,18 @@ class AiService:
             'png': 'image/png',
             'webp': 'image/webp',
         }
-        self.mistral_client = Mistral(api_key=config.Config.MISTRAL_API_KEY)
-        self.google_ai_client = genai.Client(api_key=config.Config.GOOGLE_AI_API_KEY)
-        self.openai_client = OpenAI(api_key=config.Config.OPENAI_API_KEY)
+
+    @cached_property
+    def mistral_client(self):
+        return Mistral(api_key=config.Config.MISTRAL_API_KEY)
+
+    @cached_property
+    def google_ai_client(self):
+        return genai.Client(api_key=config.Config.GOOGLE_AI_API_KEY)
+
+    @cached_property
+    def openai_client(self):
+        return OpenAI(api_key=config.Config.OPENAI_API_KEY)
 
     def embed(self, texts, dimensions):  # int = 768):  # dimensions: 768, 1536, or 3072
         if not texts:
