@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ai-project</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     ai-project — RAG chat app
+     Friendly / rounded / soft · light + dark · vanilla JS
+     ============================================================ */
+
+  :root {
+    --font: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+
+    /* accent (shared across themes) — friendly indigo-violet */
+    --accent: oklch(0.58 0.15 280);
+    --accent-hover: oklch(0.53 0.16 280);
+    --accent-soft: oklch(0.58 0.15 280 / 0.12);
+    --on-accent: oklch(0.99 0 0);
+
+    --radius-bubble: 22px;
+    --radius-md: 16px;
+    --radius-sm: 11px;
+    --col-width: 760px;
+  }
+
+  /* ---- Light theme (default) ---- */
+  html[data-theme="light"] {
+    --bg: oklch(0.985 0.004 280);
+    --surface: oklch(1 0 0);
+    --surface-2: oklch(0.965 0.005 280);
+    --text: oklch(0.27 0.02 280);
+    --muted: oklch(0.56 0.02 280);
+    --faint: oklch(0.72 0.015 280);
+    --border: oklch(0.92 0.006 280);
+    --user-bubble: var(--accent);
+    --user-text: var(--on-accent);
+    --assistant-bubble: oklch(0.965 0.005 280);
+    --shadow: 0 1px 2px oklch(0.27 0.02 280 / 0.05), 0 8px 24px oklch(0.27 0.02 280 / 0.06);
+    --shadow-bar: 0 -1px 0 var(--border), 0 -10px 30px oklch(0.27 0.02 280 / 0.04);
+  }
+
+  /* ---- Dark theme ---- */
+  html[data-theme="dark"] {
+    --bg: oklch(0.18 0.013 280);
+    --surface: oklch(0.225 0.015 280);
+    --surface-2: oklch(0.255 0.016 280);
+    --text: oklch(0.95 0.008 280);
+    --muted: oklch(0.7 0.015 280);
+    --faint: oklch(0.5 0.015 280);
+    --border: oklch(0.31 0.016 280);
+    --user-bubble: var(--accent);
+    --user-text: var(--on-accent);
+    --assistant-bubble: oklch(0.27 0.016 280);
+    --shadow: 0 1px 2px oklch(0 0 0 / 0.3), 0 10px 30px oklch(0 0 0 / 0.25);
+    --shadow-bar: 0 -1px 0 var(--border), 0 -10px 30px oklch(0 0 0 / 0.2);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body { height: 100%; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  .app {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+  }
+
+  /* ---------- Header ---------- */
+  header.topbar {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 20px;
+    height: 64px;
+    background: color-mix(in oklab, var(--surface) 80%, transparent);
+    backdrop-filter: saturate(1.4) blur(12px);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    z-index: 5;
+  }
+
+  .brand { display: flex; align-items: center; gap: 11px; }
+
+  .logo {
+    width: 32px; height: 32px;
+    border-radius: 10px;
+    background: var(--accent);
+    display: grid; place-items: center;
+    color: var(--on-accent);
+    font-weight: 700;
+    font-size: 16px;
+    box-shadow: 0 4px 12px var(--accent-soft);
+  }
+
+  .brand-name { font-weight: 700; font-size: 17px; letter-spacing: -0.01em; }
+  .brand-sub  { font-size: 12px; color: var(--muted); font-weight: 500; margin-top: 1px; }
+
+  .topbar .spacer { flex: 1; }
+
+  .icon-btn {
+    width: 38px; height: 38px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    border-radius: 11px;
+    display: grid; place-items: center;
+    cursor: pointer;
+    transition: background .15s, color .15s, border-color .15s, transform .1s;
+  }
+  .icon-btn:hover { color: var(--text); background: var(--surface-2); }
+  .icon-btn:active { transform: scale(0.94); }
+  .icon-btn svg { width: 18px; height: 18px; }
+
+  /* ---------- Conversation ---------- */
+  main.scroll {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    overscroll-behavior: contain;
+  }
+
+  .col {
+    width: 100%;
+    max-width: var(--col-width);
+    margin: 0 auto;
+    padding: 28px 20px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    min-height: 100%;
+  }
+
+  /* empty / welcome state */
+  .welcome {
+    margin: auto 0;
+    text-align: center;
+    padding: 40px 10px;
+  }
+  .welcome .big-logo {
+    width: 60px; height: 60px; border-radius: 18px;
+    background: var(--accent); color: var(--on-accent);
+    display: grid; place-items: center;
+    font-weight: 700; font-size: 27px;
+    margin: 0 auto 20px;
+    box-shadow: 0 10px 30px var(--accent-soft);
+  }
+  .welcome h1 { font-size: 27px; letter-spacing: -0.02em; margin-bottom: 8px; }
+  .welcome p  { color: var(--muted); font-size: 15px; max-width: 420px; margin: 0 auto; line-height: 1.55; }
+
+  /* message row */
+  .msg { display: flex; gap: 11px; max-width: 100%; }
+  .msg.user { flex-direction: row-reverse; }
+
+  .avatar {
+    flex: 0 0 auto;
+    width: 32px; height: 32px; border-radius: 50%;
+    display: grid; place-items: center;
+    font-size: 14px; font-weight: 700;
+  }
+  .avatar.bot  { background: var(--accent); color: var(--on-accent); }
+
+  .stack { display: flex; flex-direction: column; max-width: 78%; gap: 6px; }
+  .msg.user .stack { align-items: flex-end; }
+
+  .bubble {
+    padding: 12px 16px;
+    border-radius: var(--radius-bubble);
+    font-size: 15px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+  }
+  .msg.assistant .bubble {
+    background: var(--assistant-bubble);
+    color: var(--text);
+    border-bottom-left-radius: 7px;
+  }
+  .msg.user .bubble {
+    background: var(--user-bubble);
+    color: var(--user-text);
+    border-bottom-right-radius: 7px;
+  }
+
+  /* action row under assistant messages */
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding-left: 4px;
+    opacity: 0;
+    transition: opacity .15s;
+  }
+  .msg.assistant:hover .actions,
+  .actions:focus-within { opacity: 1; }
+
+  .act-btn {
+    border: none;
+    background: transparent;
+    color: var(--faint);
+    width: 30px; height: 30px;
+    border-radius: 9px;
+    display: grid; place-items: center;
+    cursor: pointer;
+    transition: background .14s, color .14s, transform .1s;
+  }
+  .act-btn:hover { background: var(--surface-2); color: var(--text); }
+  .act-btn:active { transform: scale(0.9); }
+  .act-btn svg { width: 16px; height: 16px; }
+  .act-btn.up.active   { color: var(--accent); background: var(--accent-soft); }
+  .act-btn.down.active { color: oklch(0.6 0.17 25); background: oklch(0.6 0.17 25 / 0.12); }
+  .act-btn.copied      { color: oklch(0.55 0.13 150); }
+
+  /* thinking indicator */
+  .thinking .bubble {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 15px 18px;
+  }
+  .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--faint);
+    animation: blink 1.3s infinite ease-in-out both;
+  }
+  .dot:nth-child(2) { animation-delay: .18s; }
+  .dot:nth-child(3) { animation-delay: .36s; }
+
+  @keyframes blink {
+    0%, 80%, 100% { opacity: .3; transform: translateY(0); }
+    40% { opacity: 1; transform: translateY(-3px); }
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  /* Entrance motion only when allowed — visible end-state is the base style above */
+  @media (prefers-reduced-motion: no-preference) {
+    .welcome { animation: rise .5s ease; }
+    .msg { animation: rise .35s ease; }
+  }
+
+  /* ---------- Input bar ---------- */
+  footer.bar {
+    flex: 0 0 auto;
+    background: color-mix(in oklab, var(--surface) 82%, transparent);
+    backdrop-filter: saturate(1.4) blur(12px);
+    box-shadow: var(--shadow-bar);
+  }
+  .bar-inner {
+    width: 100%;
+    max-width: var(--col-width);
+    margin: 0 auto;
+    padding: 14px 20px 18px;
+  }
+  .composer {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 26px;
+    padding: 7px 7px 7px 18px;
+    box-shadow: var(--shadow);
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .composer:focus-within {
+    border-color: var(--accent);
+    box-shadow: var(--shadow), 0 0 0 3px var(--accent-soft);
+  }
+  textarea#input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    resize: none;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 15px;
+    line-height: 1.5;
+    max-height: 168px;
+    padding: 9px 0;
+    outline: none;
+  }
+  textarea#input::placeholder { color: var(--faint); }
+
+  .send-btn {
+    flex: 0 0 auto;
+    width: 42px; height: 42px;
+    border: none;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--on-accent);
+    display: grid; place-items: center;
+    cursor: pointer;
+    transition: background .15s, transform .1s, opacity .15s;
+  }
+  .send-btn:hover:not(:disabled) { background: var(--accent-hover); }
+  .send-btn:active:not(:disabled) { transform: scale(0.92); }
+  .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .send-btn svg { width: 19px; height: 19px; }
+
+  .hint { text-align: center; font-size: 11.5px; color: var(--faint); margin-top: 9px; }
+
+  /* scrollbar */
+  main.scroll::-webkit-scrollbar { width: 10px; }
+  main.scroll::-webkit-scrollbar-thumb {
+    background: var(--border); border-radius: 99px;
+    border: 3px solid transparent; background-clip: content-box;
+  }
+  main.scroll::-webkit-scrollbar-thumb:hover { background: var(--faint); background-clip: content-box; }
+
+  @media (max-width: 600px) {
+    .stack { max-width: 86%; }
+    .brand-sub { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+  }
+</style>
+</head>
+<body>
+  
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">a</div>
+        <div>
+          <div class="brand-name">ai-project</div>
+          <div class="brand-sub">Knowledge assistant</div>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <button class="icon-btn" id="themeBtn" title="Toggle theme" aria-label="Toggle theme"></button>
+    </header>
+
+    <main class="scroll" id="scroll">
+      <div class="col" id="col">
+        <div class="welcome" id="welcome">
+          <div class="big-logo">a</div>
+          <h1>How can I help?</h1>
+          <p>Ask anything about your knowledge base. I'll search your documents and answer with the details I find.</p>
+        </div>
+      </div>
+    </main>
+
+    <footer class="bar">
+      <div class="bar-inner">
+        <form class="composer" id="composer">
+          <textarea id="input" rows="1" placeholder="Ask a question…" autocomplete="off"></textarea>
+          <button type="submit" class="send-btn" id="sendBtn" title="Send" aria-label="Send message">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"></path><path d="m5 12 7-7 7 7"></path></svg>
+          </button>
+        </form>
+        <div class="hint">Press <strong>Enter</strong> to send · <strong>Shift + Enter</strong> for a new line</div>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+  /* ================================================================
+     CONFIG — point this at your backend.
+     Your endpoint should accept  POST { message, history }
+     where history = [{ role: "user"|"assistant", content: "..." }]
+     and respond with JSON  { reply: "..." }   (or { answer } / { content } / { text }).
+     Leave url empty to run in offline demo mode (canned replies).
+     ================================================================ */
+  const API_CONFIG = {
+    // Same-origin Flask backend (this file is served from webapp/static).
+    url: "/ai/v1/chat/general/",
+    feedbackUrl: (id, kind) => `/ai/v1/chat/${id}/${kind}`,  // kind: "like" | "dislike"
+    userId: getUserId(),
+    // Backend expects { question } and a User-Id header.
+    buildBody: (message) => JSON.stringify({ question: message }),
+    // Envelope: { success, data: { chat_log_id, chat_api_response, source_names, ... } }.
+    parseReply: (payload) => {
+      const d = payload && payload.data ? payload.data : payload;
+      return {
+        reply: d.chat_api_response ?? d.reply ?? d.answer ?? "(no reply field found in response)",
+        id: d.chat_log_id ?? null,
+      };
+    },
+  };
+
+  // Stable per-browser id; backend requires a non-empty User-Id header.
+  function getUserId() {
+    let id = null;
+    try { id = localStorage.getItem("ai-project-user-id"); } catch (e) {}
+    if (!id) {
+      id = "web-" + ((window.crypto && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : Date.now().toString(36) + Math.random().toString(16).slice(2));
+      try { localStorage.setItem("ai-project-user-id", id); } catch (e) {}
+    }
+    return id;
+  }
+
+  // ---------- state ----------
+  const history = [];                       // [{role, content}]
+  let busy = false;
+
+  // ---------- elements ----------
+  const $scroll   = document.getElementById("scroll");
+  const $col      = document.getElementById("col");
+  const $welcome  = document.getElementById("welcome");
+  const $form     = document.getElementById("composer");
+  const $input    = document.getElementById("input");
+  const $sendBtn  = document.getElementById("sendBtn");
+  const $themeBtn = document.getElementById("themeBtn");
+
+  // ---------- icons ----------
+  const ICON = {
+    sun:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+    moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
+    up:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>',
+    down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></svg>',
+    copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>',
+    check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  };
+
+  // ---------- theme ----------
+  function applyTheme(t) {
+    document.documentElement.setAttribute("data-theme", t);
+    $themeBtn.innerHTML = t === "dark" ? ICON.sun : ICON.moon;
+    try { localStorage.setItem("ai-project-theme", t); } catch (e) {}
+  }
+  (function initTheme() {
+    let t = "light";
+    try { t = localStorage.getItem("ai-project-theme") || "light"; } catch (e) {}
+    applyTheme(t);
+  })();
+  $themeBtn.addEventListener("click", () =>
+    applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark")
+  );
+
+  // ---------- helpers ----------
+  function scrollToBottom() {
+    requestAnimationFrame(() => { $scroll.scrollTop = $scroll.scrollHeight; });
+  }
+
+  function makeAvatar(role) {
+    const a = document.createElement("div");
+    a.className = "avatar " + (role === "user" ? "user" : "bot");
+    if (role !== "user") a.textContent = "a";
+    return a;
+  }
+
+  function addUserMessage(text) {
+    const row = document.createElement("div");
+    row.className = "msg user";
+    const stack = document.createElement("div");
+    stack.className = "stack";
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    bubble.textContent = text;
+    stack.appendChild(bubble);
+    row.appendChild(stack);
+    $col.appendChild(row);
+    scrollToBottom();
+  }
+
+  function addAssistantMessage(text, chatLogId) {
+    const row = document.createElement("div");
+    row.className = "msg assistant";
+    row.appendChild(makeAvatar("assistant"));
+
+    const stack = document.createElement("div");
+    stack.className = "stack";
+
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    bubble.textContent = text;
+    stack.appendChild(bubble);
+
+    // action row: thumbs up / down / copy
+    const actions = document.createElement("div");
+    actions.className = "actions";
+
+    const up = actionButton("up", ICON.up, "Good response");
+    const down = actionButton("down", ICON.down, "Bad response");
+    up.addEventListener("click", () => {
+      const on = up.classList.toggle("active");
+      if (on) { down.classList.remove("active"); sendFeedback(chatLogId, "like"); }
+    });
+    down.addEventListener("click", () => {
+      const on = down.classList.toggle("active");
+      if (on) { up.classList.remove("active"); sendFeedback(chatLogId, "dislike"); }
+    });
+
+    const copy = actionButton("copy", ICON.copy, "Copy");
+    copy.addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText(text); } catch (e) {}
+      copy.classList.add("copied");
+      copy.innerHTML = ICON.check;
+      setTimeout(() => { copy.classList.remove("copied"); copy.innerHTML = ICON.copy; }, 1400);
+    });
+
+    actions.append(up, down, copy);
+    stack.appendChild(actions);
+    row.appendChild(stack);
+    $col.appendChild(row);
+    scrollToBottom();
+  }
+
+  function actionButton(kind, svg, title) {
+    const b = document.createElement("button");
+    b.className = "act-btn " + kind;
+    b.type = "button";
+    b.title = title;
+    b.setAttribute("aria-label", title);
+    b.innerHTML = svg;
+    return b;
+  }
+
+  function showThinking() {
+    const row = document.createElement("div");
+    row.className = "msg assistant thinking";
+    row.id = "thinking";
+    row.appendChild(makeAvatar("assistant"));
+    const stack = document.createElement("div");
+    stack.className = "stack";
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    bubble.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
+    stack.appendChild(bubble);
+    row.appendChild(stack);
+    $col.appendChild(row);
+    scrollToBottom();
+  }
+  function hideThinking() {
+    const t = document.getElementById("thinking");
+    if (t) t.remove();
+  }
+
+  // ---------- backend ----------
+  async function fetchAssistantReply(message) {
+    if (!API_CONFIG.url) return { reply: await demoReply(message), id: null };   // offline demo mode
+    const res = await fetch(API_CONFIG.url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "User-Id": API_CONFIG.userId },
+      body: API_CONFIG.buildBody(message),
+    });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    return API_CONFIG.parseReply(data);   // { reply, id }
+  }
+
+  // Best-effort thumbs up/down to the backend feedback endpoints.
+  async function sendFeedback(id, kind) {
+    if (!id || !API_CONFIG.url) return;
+    try {
+      await fetch(API_CONFIG.feedbackUrl(id, kind), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "User-Id": API_CONFIG.userId },
+        body: "{}",
+      });
+    } catch (e) {}
+  }
+
+  // canned reply so the app works before you wire up API_CONFIG.url
+  function demoReply(message) {
+    const replies = [
+      "Here's what I found in your knowledge base:\n\nBased on the indexed documents, the answer to your question involves a few key points. Once you connect your backend (set API_CONFIG.url in the source), I'll return real, retrieval-grounded answers here.",
+      "Good question. From the relevant sections of your docs, the short version is yes — with a couple of caveats worth noting. Wire up your API endpoint and I'll pull the specifics straight from your sources.",
+      "I searched the available material and pulled together a summary for you. This is a placeholder response in demo mode — point API_CONFIG.url at your RAG backend to get live answers.",
+    ];
+    const delay = 700 + Math.random() * 700;
+    return new Promise((r) => setTimeout(() => r(replies[Math.floor(Math.random() * replies.length)]), delay));
+  }
+
+  // ---------- send flow ----------
+  async function send(text) {
+    if (busy || !text.trim()) return;
+    busy = true;
+    $sendBtn.disabled = true;
+
+    if ($welcome) { $welcome.remove(); }
+
+    const msg = text.trim();
+    addUserMessage(msg);
+    history.push({ role: "user", content: msg });
+
+    $input.value = "";
+    autoGrow();
+    showThinking();
+
+    try {
+      const { reply, id } = await fetchAssistantReply(msg);
+      hideThinking();
+      addAssistantMessage(reply, id);
+      history.push({ role: "assistant", content: reply });
+    } catch (err) {
+      hideThinking();
+      addAssistantMessage("Sorry — I couldn't reach the server. Please try again.\n\n(" + err.message + ")");
+    } finally {
+      busy = false;
+      $sendBtn.disabled = false;
+      $input.focus();
+    }
+  }
+
+  // ---------- input behavior ----------
+  function autoGrow() {
+    $input.style.height = "auto";
+    $input.style.height = Math.min($input.scrollHeight, 168) + "px";
+  }
+  $input.addEventListener("input", autoGrow);
+
+  $form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    send($input.value);
+  });
+
+  $input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      send($input.value);
+    }
+  });
+
+  $input.focus();
+  </script>
+
+
+</body></html>
