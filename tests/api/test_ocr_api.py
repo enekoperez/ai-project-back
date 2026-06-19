@@ -4,6 +4,7 @@ from flask import Flask
 
 from response_assertions import assert_error_code, assert_success_response
 from webapp.api.ocr_v1_api import ocr_v1
+from webapp.config import Config
 from webapp.routes.error_handlers import init_error_handlers
 
 
@@ -70,6 +71,34 @@ def test_answer_ocr_questions_returns_422_with_blank_question(monkeypatch):
 
     assert response.status_code == 422
     assert_error_code(response, "validation_error")
+    service.ask.assert_not_called()
+
+
+def test_answer_ocr_questions_returns_422_with_too_many_questions(monkeypatch):
+    service = Mock()
+    client = make_client(monkeypatch, service)
+
+    response = client.post(
+        "/ai/v1/ocr/",
+        json={"file_url": "https://example.com/invoice.pdf", "questions": [f"Q{i}?" for i in range(11)]},
+    )
+
+    assert response.status_code == 422
+    assert_error_code(response, "validation_error")
+    service.ask.assert_not_called()
+
+
+def test_oversized_body_is_rejected_with_413(monkeypatch):
+    service = Mock()
+    client = make_client(monkeypatch, service)
+    assert Config.MAX_CONTENT_LENGTH == 1 * 1024 * 1024
+    client.application.config["MAX_CONTENT_LENGTH"] = Config.MAX_CONTENT_LENGTH
+
+    oversized = b'{"file_url":"' + b"a" * Config.MAX_CONTENT_LENGTH + b'"}'
+    response = client.post("/ai/v1/ocr/", data=oversized, content_type="application/json")
+
+    assert response.status_code == 413
+    assert_error_code(response, "request_entity_too_large")
     service.ask.assert_not_called()
 
 

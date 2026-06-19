@@ -1,7 +1,7 @@
 from flask import Blueprint
 
 from webapp.api.responses import success
-from webapp.api.validation import LangSimpleRequest, validate_json
+from webapp.api.validation import EmptyRequest, LangSimpleRequest, validate_json
 from webapp.services.lang_service import LangService
 
 lang_v1 = Blueprint("lang_v1", __name__)
@@ -17,5 +17,6 @@ def call_simple():
 
 @lang_v1.route("complex", methods=["POST"])
 def call_complex():
+    validate_json(EmptyRequest)
     response = lang_service.call_complex()
     return success(response)

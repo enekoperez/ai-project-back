@@ -9,6 +9,8 @@ class Config:
     DEBUG = environ["FLASK_DEBUG"].lower() == "true"  # env bool
     # TEST = False
 
+    MAX_CONTENT_LENGTH = 1 * 1024 * 1024  # reject request bodies larger than 1 MB (Flask returns 413)
+
     DB_CONNECTION_STRING = environ["AI_DB_CONNECTION_STRING"]
     QDRANT_URL = environ["QDRANT_URL"]
     QDRANT_COLLECTION_NAME = environ["QDRANT_COLLECTION_NAME"]
