@@ -51,12 +51,6 @@ class OcrRequest(_RequestModel):
     questions: List[NonEmptyString] = Field(min_length=1, max_length=10)
 
 
-class LangSimpleRequest(_RequestModel):
-    """Body of a simple LangChain request."""
-
-    question: NonEmptyString
-
-
 class ChatLogPathRequest(_RequestModel):
     """The chat log identifier taken from the request path."""
 

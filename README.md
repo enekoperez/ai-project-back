@@ -27,7 +27,6 @@ Core capabilities:
 - Qdrant for local vector search
 - Pydantic request validation
 - Google Gemini, Mistral, and OpenAI provider integrations
-- LangChain, langchain-google-genai, and DeepAgents for agent workflows
 - Loguru for structured logging
 - pytest, pytest-cov, Ruff
 - Docker, GitHub Actions, Semgrep, Dependabot
@@ -213,26 +212,6 @@ Content-Type: application/json
 ```
 
 The `questions` list must contain between 1 and 10 entries.
-
-### LangChain Agent Experiments
-
-These endpoints exercise LangChain and DeepAgents workflows separately from the main chat services. The simple endpoint runs a LangChain agent with a small weather tool, while the complex endpoint compares a LangChain agent with a DeepAgents setup on a tool-grounded document task.
-
-```http
-POST /ai/v1/lang/simple
-Content-Type: application/json
-
-{
-  "question": "Explain retrieval augmented generation in one paragraph."
-}
-```
-
-```http
-POST /ai/v1/lang/complex
-Content-Type: application/json
-
-{}
-```
 
 ## Local Development
 
