@@ -2,6 +2,7 @@ import time
 
 from google import genai
 from google.genai import types
+from loguru import logger
 
 from webapp import config
 
@@ -17,7 +18,7 @@ def generate(label, **kwargs):
     config_obj = kwargs.pop("config", None) or types.GenerateContentConfig()
     config_obj.temperature = TEMPERATURE
     response = client.models.generate_content(model=MODEL, config=config_obj, **kwargs)
-    print(f"[llm {label}] {time.time() - start:.2f}s")
+    logger.info(f"[llm {label}] {time.time() - start:.2f}s")
     return response
 
 
@@ -137,11 +138,11 @@ def orchestrator(user_request: str) -> str:
 
         tool_calls = [p.function_call for p in candidate.content.parts if getattr(p, "function_call", None)]
         if not tool_calls:
-            print(f"i:{i} no tool used -> writer")
+            logger.info(f"i:{i} no tool used -> writer")
             return writer_agent(response.text)
 
         for call in tool_calls:
-            print(f"i:{i} tool: {call.name}({dict(call.args)})")
+            logger.info(f"i:{i} tool: {call.name}({dict(call.args)})")
             result = execute_tool(call.name, dict(call.args))
             contents.append(
                 types.Content(
