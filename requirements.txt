@@ -7,7 +7,7 @@ pytest==9.1.1
 pytest-cov==7.1.0
 pydantic==2.13.4
 python-dotenv==1.2.2
-mistralai==2.4.13
+mistralai==2.5.0
 google-genai==2.9.0
 openai==2.43.0
 qdrant-client==1.18.0
