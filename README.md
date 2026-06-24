@@ -124,7 +124,8 @@ Request bodies are capped at 1 MB; larger payloads are rejected with HTTP 413.
 Requests are rate limited per user (by the `User-Id` header, falling back to the
 client IP) using [Flask-Limiter](https://flask-limiter.readthedocs.io/) backed by
 Redis, so limits are shared across all Gunicorn workers. Exceeding a limit returns
-HTTP 429 with the standard error envelope.
+HTTP 429 with the standard error envelope. If the storage backend is unreachable,
+the limiter falls back to in-memory limiting (per worker) instead of failing requests.
 
 | Scope | Limit |
 | --- | --- |

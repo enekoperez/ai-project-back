@@ -13,6 +13,7 @@ def _rate_limit_key() -> str:
 limiter = Limiter(
     key_func=_rate_limit_key,
     storage_uri=Config.RATELIMIT_STORAGE_URI,
+    in_memory_fallback_enabled=True,  # fall back to in-memory limiting if the storage backend is down
     application_limits=["20 per hour"],  # 20 requests per hour per user, across the entire app
 )
 
