@@ -33,10 +33,10 @@ def test_shared_chat_limit_blocks_after_ten_requests(monkeypatch):
     headers = {"User-Id": "chat-limit-user"}
     body = {"question": "hi"}
     statuses = [
-        client.post("/ai/v1/chat/general/", json=body, headers=headers).status_code for _ in range(100)
+        client.post("/ai/v1/chat/general/", json=body, headers=headers).status_code for _ in range(10)
     ]
 
-    assert statuses.count(201) == 100
+    assert statuses.count(201) == 10
     blocked = client.post("/ai/v1/chat/general/", json=body, headers=headers)
     assert blocked.status_code == 429
     payload = blocked.get_json()

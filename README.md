@@ -128,12 +128,12 @@ HTTP 429 with the standard error envelope.
 
 | Scope | Limit |
 | --- | --- |
-| Entire app (all endpoints combined) | 200 / hour |
-| `POST /ai/v1/chat/orchestrator/` | 50 / hour |
-| `POST /ai/v1/chat/{general,football,weather}/` (shared) | 100 / hour |
+| Entire app (all endpoints combined) | 20 / hour |
+| `POST /ai/v1/chat/orchestrator/` | 5 / hour |
+| `POST /ai/v1/chat/{general,football,weather}/` (shared) | 10 / hour |
 
 The shared chat limit is one combined bucket across the three plain chat
-assistants. All limits roll up to the 200/hour app-wide cap. Configure the backend
+assistants. All limits roll up to the 20/hour app-wide cap. Configure the backend
 with `RATELIMIT_STORAGE_URI` (e.g. `redis://localhost:6379`).
 
 Rate limiting assumes `User-Id` is set by a trusted upstream (e.g. an
