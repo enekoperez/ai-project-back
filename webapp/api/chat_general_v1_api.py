@@ -2,6 +2,7 @@ from flask import Blueprint
 
 from webapp.api.responses import success
 from webapp.api.validation import ChatRequest, EmptyRequest, validate_json, validate_user_id
+from webapp.extensions import chat_limit
 from webapp.services.chat_general_service import ChatGeneralService
 
 chat_general_v1 = Blueprint("chat_general_v1", __name__)
@@ -9,6 +10,7 @@ chat_general_service = ChatGeneralService()
 
 
 @chat_general_v1.route("", methods=["POST"])
+@chat_limit
 def create_chat():
     user_id = validate_user_id()
     request_json = validate_json(ChatRequest)

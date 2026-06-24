@@ -103,6 +103,23 @@ All chat endpoints that depend on user history expect a `User-Id` header.
 
 Request bodies are capped at 1 MB; larger payloads are rejected with HTTP 413.
 
+### Rate Limits
+
+Requests are rate limited per user (by the `User-Id` header, falling back to the
+client IP) using [Flask-Limiter](https://flask-limiter.readthedocs.io/) backed by
+Redis, so limits are shared across all Gunicorn workers. Exceeding a limit returns
+HTTP 429 with the standard error envelope.
+
+| Scope | Limit |
+| --- | --- |
+| Entire app (all endpoints combined) | 20 / hour |
+| `POST /ai/v1/chat/orchestrator/` | 5 / hour |
+| `POST /ai/v1/chat/{general,football,weather}/` (shared) | 10 / hour |
+
+The shared chat limit is one combined bucket across the three plain chat
+assistants. All limits roll up to the 20/hour app-wide cap. Configure the backend
+with `RATELIMIT_STORAGE_URI` (e.g. `redis://localhost:6379`).
+
 ### Health Check
 
 ```http
@@ -233,6 +250,7 @@ FLASK_DEBUG=false
 AI_DB_CONNECTION_STRING=mongodb://localhost:27017/ai_db
 QDRANT_URL=http://127.0.0.1:6333
 QDRANT_COLLECTION_NAME=rag_chunks_hybrid
+RATELIMIT_STORAGE_URI=redis://localhost:6379
 MISTRAL_API_KEY=api-key-needed
 GOOGLE_AI_API_KEY=api-key-needed
 OPENAI_API_KEY=api-key-needed
@@ -277,7 +295,16 @@ Dashboard:
 http://127.0.0.1:6333/dashboard
 ```
 
-### 5. Start the Flask app
+### 5. Start Redis
+
+Redis backs the rate limiter (see [Rate Limits](#rate-limits)) and must match
+`RATELIMIT_STORAGE_URI`. Run it locally with Docker:
+
+```bash
+docker run -d --name ai-redis -p 6379:6379 redis:latest
+```
+
+### 6. Start the Flask app
 
 ```bash
 flask --app webapp.run run
@@ -289,7 +316,7 @@ The app exposes the health check at:
 http://127.0.0.1:5000/
 ```
 
-### 6. Sync RAG documents
+### 7. Sync RAG documents
 
 Run this after configuring the Google AI key, MongoDB connection, and Qdrant. The command rebuilds the Qdrant collection and embeds all RAG documents each time.
 
