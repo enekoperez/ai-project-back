@@ -11,6 +11,7 @@ def _install_test_environment_defaults():
     os.environ.setdefault("MISTRAL_API_KEY", "test-mistral-api-key")
     os.environ.setdefault("GOOGLE_AI_API_KEY", "test-google-ai-api-key")
     os.environ.setdefault("OPENAI_API_KEY", "test-openai-api-key")
+    os.environ.setdefault("RATELIMIT_STORAGE_URI", "memory://")
 
 
 def _install_ai_dependency_stubs():
