@@ -117,8 +117,12 @@ HTTP 429 with the standard error envelope.
 | `POST /ai/v1/chat/{general,football,weather}/` (shared) | 100 / hour |
 
 The shared chat limit is one combined bucket across the three plain chat
-assistants. All limits roll up to the 20/hour app-wide cap. Configure the backend
+assistants. All limits roll up to the 200/hour app-wide cap. Configure the backend
 with `RATELIMIT_STORAGE_URI` (e.g. `redis://localhost:6379`).
+
+Rate limiting assumes `User-Id` is set by a trusted upstream (e.g. an
+authenticating API gateway that overwrites any client-supplied value); the
+service should not be exposed directly, or the header could be spoofed.
 
 ### Health Check
 
