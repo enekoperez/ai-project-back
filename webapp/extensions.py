@@ -17,4 +17,4 @@ limiter = Limiter(
 )
 
 # 10 per hour per user, shared across the general, football and weather chat endpoints combined
-chat_limit = limiter.shared_limit("10 per hour", scope="chats")
+chat_limit = limiter.shared_limit("10 per hour", scope="chat_limit")
