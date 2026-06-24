@@ -11,6 +11,7 @@ This project demonstrates how to build an AI application as a maintainable backe
 Core capabilities:
 
 - General RAG chat over markdown knowledge sources.
+- Multi-agent orchestrator that delegates a request across five specialist agents and returns a rendered HTML answer.
 - Football assistant with Gemini cached context for reusable domain knowledge.
 - Weather assistant using Gemini function calling and the Open-Meteo API.
 - OCR/question extraction over remote PDF files with structured JSON output.
@@ -25,6 +26,7 @@ Core capabilities:
 - Python, Flask, Gunicorn, gevent
 - MongoDB with MongoEngine
 - Qdrant for local vector search
+- Flask-Limiter with Redis for per-user rate limiting
 - Pydantic request validation
 - Google Gemini, Mistral, and OpenAI provider integrations
 - Loguru for structured logging
@@ -49,6 +51,8 @@ webapp/
   tools/           Model-callable tools, such as weather lookup
   static/          Web chat UI (index.html) served at /ui
   config.py        Environment-driven configuration
+  extensions.py    Flask-Limiter setup (rate-limit key and limits)
+  datetime_utils.py  Datetime helpers
   run.py           Flask app factory and runtime entrypoint
   cli.py           Flask CLI commands
 ```
@@ -74,6 +78,18 @@ flask --app webapp.run rag-sync
 ```
 
 The sync process reads local markdown docs, chunks and embeds them, and rebuilds the Qdrant vector collection. Qdrant stores only the source name and chunk text as payload, while MongoDB remains responsible for app data such as chat history and feedback.
+
+### Multi-Agent Orchestrator
+
+`ChatOrchestratorService` answers a single question by coordinating a team of specialist agents instead of a single prompt. A Gemini coordinator (`gemini-3.1-flash-lite`, up to 25 delegation steps) decides which specialist to call via tool calling, routing work to:
+
+- **research** — gathers factual information.
+- **analysis** — compares options and weighs trade-offs.
+- **writing** — composes clear prose from the gathered material.
+- **dev** — writes code and technical solutions.
+- **designer** — turns the combined result into a clean HTML fragment.
+
+Because the designer agent renders the final answer, this endpoint returns `text/html` rather than the JSON envelope used elsewhere.
 
 ### Web Chat UI
 
@@ -157,6 +173,19 @@ GET /ai/v1/chat/general/
 User-Id: demo-user
 ```
 
+### Multi-Agent Orchestrator
+
+No `User-Id` header is required. Unlike the other endpoints, the response is an HTML fragment (`Content-Type: text/html`), not the JSON envelope.
+
+```http
+POST /ai/v1/chat/orchestrator/
+Content-Type: application/json
+
+{
+  "question": "Compare REST and gRPC, then show a small Python example."
+}
+```
+
 ### Football Chat
 
 ```http
@@ -209,6 +238,7 @@ User-Id: demo-user
 ```http
 PUT /ai/v1/chat/<chat_log_id>/like
 Content-Type: application/json
+User-Id: demo-user
 
 {}
 ```
@@ -216,6 +246,7 @@ Content-Type: application/json
 ```http
 PUT /ai/v1/chat/<chat_log_id>/dislike
 Content-Type: application/json
+User-Id: demo-user
 
 {}
 ```
@@ -348,7 +379,17 @@ Then call:
 http://localhost:8080/
 ```
 
-The production container runs Gunicorn with gevent workers.
+The production container runs Gunicorn with gevent workers (`-w 4`).
+
+The container needs a reachable Redis for rate limiting. The `RATELIMIT_STORAGE_URI=redis://localhost:6379` from `.env` will not work inside the container, since `localhost` resolves to the container itself. Point it at the host or a linked service instead, for example:
+
+```bash
+docker run --rm --env-file .env \
+  -e RATELIMIT_STORAGE_URI=redis://host.docker.internal:6379 \
+  -p 8080:80 ai-project
+```
+
+Alternatively, run Redis and the app on a shared Docker network, or point at a remote Redis instance.
 
 ## Testing and Quality
 
@@ -357,6 +398,8 @@ Run the test suite:
 ```bash
 pytest tests/ --color=yes --cov=webapp --cov-report=term-missing
 ```
+
+CI runs the same command with `--cov-fail-under=80` to enforce the coverage threshold.
 
 Run linting:
 
@@ -371,7 +414,7 @@ The GitHub Actions pipeline runs:
 - pytest with coverage and an 80% minimum threshold.
 - Docker image build and import smoke test.
 - Semgrep security scanning.
-- Dependabot updates for pip, GitHub Actions, and Docker.
+- Weekly Dependabot updates for pip, GitHub Actions, and Docker.
 
 ### RAG retrieval evals
 
