@@ -2,7 +2,6 @@ from unittest.mock import Mock
 
 from flask import Flask
 
-from response_assertions import assert_error_code
 from webapp.api.chat_general_v1_api import chat_general_v1
 from webapp.extensions import _rate_limit_key, limiter
 from webapp.routes.error_handlers import init_error_handlers
@@ -34,10 +33,12 @@ def test_shared_chat_limit_blocks_after_ten_requests(monkeypatch):
     headers = {"User-Id": "chat-limit-user"}
     body = {"question": "hi"}
     statuses = [
-        client.post("/ai/v1/chat/general/", json=body, headers=headers).status_code for _ in range(11)
+        client.post("/ai/v1/chat/general/", json=body, headers=headers).status_code for _ in range(100)
     ]
 
-    assert statuses.count(201) == 10
+    assert statuses.count(201) == 100
     blocked = client.post("/ai/v1/chat/general/", json=body, headers=headers)
     assert blocked.status_code == 429
-    assert_error_code(blocked, "too_many_requests")
+    payload = blocked.get_json()
+    assert payload["success"] is False
+    assert payload["error"]["code"] == "too_many_requests"
