@@ -16,9 +16,9 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Build Docker image
-        run: docker build . --file Dockerfile --tag ai-project:test
+        run: docker build . --file Dockerfile --tag ai-project-back:test
 
       - name: Smoke test Docker image imports
         run: |
-          docker run --rm --env-file .env.example ai-project:test \
+          docker run --rm --env-file .env.example ai-project-back:test \
             python -c "import webapp.run; print('Application imports successfully')"

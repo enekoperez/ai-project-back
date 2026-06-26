@@ -1,6 +1,6 @@
 # AI Project
 
-[![Tests](https://github.com/enekoperez/ai-project/actions/workflows/tests.yml/badge.svg)](https://github.com/enekoperez/ai-project/actions/workflows/tests.yml)
+[![Tests](https://github.com/enekoperez/ai-project-back/actions/workflows/tests.yml/badge.svg)](https://github.com/enekoperez/ai-project-back/actions/workflows/tests.yml)
 
 An AI backend service built with Flask, MongoDB, and multiple LLM providers. It combines retrieval-augmented chat, domain-specific assistants, tool calling, OCR-style document extraction, persistent conversation history, feedback logging, Docker deployment, and automated CI checks.
 
@@ -367,13 +367,13 @@ flask --app webapp.run rag-sync
 Build the image:
 
 ```bash
-docker build -t ai-project .
+docker build -t ai-project-back .
 ```
 
 Run the container:
 
 ```bash
-docker run --rm --env-file .env -p 8080:80 ai-project
+docker run --rm --env-file .env -p 8080:80 ai-project-back
 ```
 
 Then call:
@@ -389,7 +389,7 @@ The container needs a reachable Redis for rate limiting. The `RATELIMIT_STORAGE_
 ```bash
 docker run --rm --env-file .env \
   -e RATELIMIT_STORAGE_URI=redis://host.docker.internal:6379 \
-  -p 8080:80 ai-project
+  -p 8080:80 ai-project-back
 ```
 
 Alternatively, run Redis and the app on a shared Docker network, or point at a remote Redis instance.
