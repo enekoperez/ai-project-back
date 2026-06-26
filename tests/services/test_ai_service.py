@@ -360,16 +360,16 @@ def test_google_get_cache_returns_name_and_create_time():
     service.google_ai_client.caches.get.assert_called_once_with(name="caches/abc")
 
 
-def test_google_get_cache_returns_none_when_not_found():
+def test_google_get_cache_returns_none_when_permission_denied():
     service = make_service()
-    service.google_ai_client.caches.get = Mock(side_effect=ClientError(status="NOT_FOUND"))
+    service.google_ai_client.caches.get = Mock(side_effect=ClientError(status="PERMISSION_DENIED"))
 
     assert service.google_get_cache(cache_name="caches/abc") == (None, None)
 
 
 def test_google_get_cache_raises_on_other_client_error():
     service = make_service()
-    service.google_ai_client.caches.get = Mock(side_effect=ClientError(status="PERMISSION_DENIED"))
+    service.google_ai_client.caches.get = Mock(side_effect=ClientError(status="NOT_FOUND"))
 
     with pytest.raises(RuntimeError, match="Cache error"):
         service.google_get_cache(cache_name="caches/abc")
@@ -394,7 +394,7 @@ def test_google_delete_cache_deletes_existing_cache():
 
 def test_google_delete_cache_returns_false_when_missing():
     service = make_service()
-    service.google_ai_client.caches.get = Mock(side_effect=ClientError(status="NOT_FOUND"))
+    service.google_ai_client.caches.get = Mock(side_effect=ClientError(status="PERMISSION_DENIED"))
     service.google_ai_client.caches.delete = Mock()
 
     assert service.google_delete_cache(cache_name="caches/abc") is False

@@ -250,7 +250,8 @@ class AiService:
             try:
                 cache = self.google_ai_client.caches.get(name=cache_name)
             except genai_errors.ClientError as e:
-                if e.status == 'NOT_FOUND':
+                # if e.status == 'NOT_FOUND':
+                if e.status == 'PERMISSION_DENIED':
                     logger.info("Google cache not found")
                     # Usually the cache expired or was deleted; chat falls back to creating a new cache
                     cache = None
