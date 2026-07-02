@@ -1,3 +1,10 @@
+# Dependabot: automated dependency updates.
+# Watches dependencies and opens grouped weekly PRs (one per ecosystem)
+# when updates are available. The 7-day cooldown delays newly published
+# versions so malicious/broken releases can be caught before we pull them.
+#   - pip:            Python packages (requirements.txt)
+#   - github-actions: action versions pinned in .github/workflows/*
+#   - docker:         base image in the Dockerfile
 version: 2
 updates:
   - package-ecosystem: "pip"

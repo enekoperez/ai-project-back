@@ -1,3 +1,6 @@
+# Static security analysis: runs Semgrep on push/PR to main.
+# `--error` makes the job fail (non-zero exit) when findings exist, so
+# security/supply-chain issues block the build instead of being advisory.
 name: Semgrep
 
 on:

@@ -1,3 +1,6 @@
+# CI quality gate: runs the test suite on push/PR to main.
+# Sets up Python 3.11, installs deps, then runs pip check (dependency
+# compatibility), ruff (lint), and pytest with a >=80% coverage floor.
 name: Tests
 
 on:

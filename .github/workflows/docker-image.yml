@@ -1,3 +1,6 @@
+# Docker build verification: builds the image on push/PR to main and runs
+# a smoke test (import webapp.run) to confirm the container boots and the
+# app imports cleanly. Does not push the image anywhere.
 name: Docker Image CI
 
 on:
