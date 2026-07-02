@@ -20,7 +20,7 @@ def test_rate_limit_key_falls_back_to_client_ip():
         assert _rate_limit_key() == "203.0.113.7"
 
 
-def test_shared_chat_limit_blocks_after_ten_requests(monkeypatch):
+def test_shared_chat_limit_blocks_after_hundred_requests(monkeypatch):
     service = Mock()
     service.chat.return_value = {"id": "chat-1", "response": "ok", "created_at": "2026-06-01T12:00:00"}
     monkeypatch.setattr("webapp.api.chat_general_v1_api.chat_general_service", service)
@@ -34,10 +34,10 @@ def test_shared_chat_limit_blocks_after_ten_requests(monkeypatch):
     headers = {"User-Id": "chat-limit-user"}
     body = {"question": "hi"}
     statuses = [
-        client.post("/ai/v1/chat/general/", json=body, headers=headers).status_code for _ in range(10)
+        client.post("/ai/v1/chat/general/", json=body, headers=headers).status_code for _ in range(100)
     ]
 
-    assert statuses.count(201) == 10
+    assert statuses.count(201) == 100
     blocked = client.post("/ai/v1/chat/general/", json=body, headers=headers)
     assert blocked.status_code == 429
     payload = blocked.get_json()

@@ -9,7 +9,7 @@ chat_orchestrator_service = ChatOrchestratorService()
 
 
 @chat_orchestrator_v1.route("", methods=["POST"])
-@limiter.limit("5 per hour")
+@limiter.limit("50 per hour")
 def create_chat():
     request_json = validate_json(ChatRequest)
     html = chat_orchestrator_service.chat(request_json)
